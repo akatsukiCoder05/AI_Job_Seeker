@@ -83,6 +83,26 @@ export const RecruiterJobsPage = () => {
   // Submit handler
   const onSubmit = async (values: JobFormValues) => {
     try {
+      let finalSkills = [...skills];
+      if (skillText.trim()) {
+        const extraSkills = skillText.split(",").map(s => s.trim()).filter(Boolean);
+        extraSkills.forEach(s => {
+          if (!finalSkills.includes(s)) {
+            finalSkills.push(s);
+          }
+        });
+      }
+
+      let finalRequirements = [...requirements];
+      if (reqText.trim()) {
+        const extraReqs = reqText.split(",").map(r => r.trim()).filter(Boolean);
+        extraReqs.forEach(r => {
+          if (!finalRequirements.includes(r)) {
+            finalRequirements.push(r);
+          }
+        });
+      }
+
       await createJobMutation.mutateAsync({
         title: values.title,
         company: values.company,
@@ -90,14 +110,16 @@ export const RecruiterJobsPage = () => {
         location: values.location,
         workMode: values.workMode,
         type: values.type,
-        skills,
-        requirements,
+        skills: finalSkills,
+        requirements: finalRequirements,
       });
 
       // Reset form and state
       reset();
       setSkills([]);
       setRequirements([]);
+      setSkillText("");
+      setReqText("");
       setIsCreating(false);
     } catch (err) {
       alert("Failed to create job posting");

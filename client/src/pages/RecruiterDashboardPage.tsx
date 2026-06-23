@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Briefcase, Users, Plus, Download, RefreshCw } from "lucide-react";
+import { Briefcase, Users, Plus, Download, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
 import useAuthStore from "../store/auth.store";
 import useJobs, { Job } from "../features/useJobs";
 import useApplications, { ApplicantDetail } from "../features/useApplications";
 import MatchRing from "../components/match-ring/MatchRing";
+import api from "../lib/axios";
 
 export const RecruiterDashboardPage = () => {
   const { user } = useAuthStore();
@@ -13,6 +14,45 @@ export const RecruiterDashboardPage = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   // Selected Candidate for profile audit
   const [selectedApplicant, setSelectedApplicant] = useState<ApplicantDetail | null>(null);
+
+  // LaTeX state for candidates
+  const [latexCode, setLatexCode] = useState<string>("");
+  const [loadingLatex, setLoadingLatex] = useState<boolean>(false);
+
+  const handleSelectApplicant = (app: ApplicantDetail | null) => {
+    setSelectedApplicant(app);
+    setLatexCode("");
+  };
+
+  const getResumeUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const baseUrl = apiUrl.replace(/\/api$/, "");
+    return `${baseUrl}${url}`;
+  };
+
+  const fetchLatexResume = async () => {
+    if (!selectedApplicant?.seeker?._id) return;
+    setLoadingLatex(true);
+    try {
+      const res = await api.post("/ai/recruiter/latex-resume", {
+        seekerId: selectedApplicant.seeker._id,
+      });
+      if (res.data?.success) {
+        setLatexCode(res.data.data.latex);
+      } else {
+        alert("Failed to compile LaTeX resume");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error?.message || "Failed to compile LaTeX resume");
+    } finally {
+      setLoadingLatex(false);
+    }
+  };
 
   // 1. Fetch all jobs
   const { useGetJobs } = useJobs({ limit: 100 });
@@ -147,7 +187,7 @@ export const RecruiterDashboardPage = () => {
                   key={job._id}
                   onClick={() => {
                     setSelectedJob(job);
-                    setSelectedApplicant(null);
+                    handleSelectApplicant(null);
                   }}
                   className={`p-4 rounded-card border transition-all cursor-pointer ${
                     selectedJob?._id === job._id
@@ -194,7 +234,7 @@ export const RecruiterDashboardPage = () => {
                 {applicants.map((app) => (
                   <div
                     key={app.application._id}
-                    onClick={() => setSelectedApplicant(app)}
+                    onClick={() => handleSelectApplicant(app)}
                     className={`p-4 bg-white border rounded-card hover:border-indigo/40 hover:shadow-card transition-all flex justify-between items-center gap-4 cursor-pointer ${
                       selectedApplicant?.application._id === app.application._id
                         ? "border-indigo shadow-card"
@@ -232,7 +272,7 @@ export const RecruiterDashboardPage = () => {
                   <p className="text-sm text-indigo font-semibold">{selectedApplicant.seeker.email} • {selectedApplicant.seeker.phone}</p>
                 </div>
                 <button
-                  onClick={() => setSelectedApplicant(null)}
+                  onClick={() => handleSelectApplicant(null)}
                   className="text-text-muted hover:bg-canvas p-1.5 rounded-full shrink-0"
                   title="Close"
                 >
@@ -277,7 +317,7 @@ export const RecruiterDashboardPage = () => {
                 <div className="flex justify-between items-center p-4 bg-indigo-tint/20 border border-indigo/10 rounded-xl">
                   <span className="text-xs font-semibold text-indigo">Candidate Resume Attachment</span>
                   <a
-                    href={selectedApplicant.application.resumeUrl}
+                    href={getResumeUrl(selectedApplicant.application.resumeUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 py-1.5 bg-indigo text-white text-xs font-semibold rounded-button hover:bg-opacity-95 flex items-center gap-1"
@@ -286,6 +326,77 @@ export const RecruiterDashboardPage = () => {
                   </a>
                 </div>
               )}
+
+              {/* AI LaTeX Resume / Overleaf compile */}
+              <div className="p-4 bg-canvas border border-border rounded-xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-xs text-ink uppercase tracking-wider">AI LaTeX Resume (Overleaf)</h4>
+                    <p className="text-[10px] text-text-muted mt-0.5">Compile and view candidate's tailored LaTeX profile template.</p>
+                  </div>
+                  {!latexCode ? (
+                    <button
+                      onClick={fetchLatexResume}
+                      disabled={loadingLatex}
+                      className="px-3 py-1.5 bg-indigo text-white text-xs font-semibold rounded-button hover:bg-opacity-95 disabled:opacity-50 flex items-center gap-1 shadow-sm transition-all"
+                    >
+                      {loadingLatex ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin" /> Compiling...
+                        </>
+                      ) : (
+                        "Compile LaTeX"
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setLatexCode("")}
+                      className="text-[10px] font-semibold text-rose hover:underline"
+                    >
+                      Clear Code
+                    </button>
+                  )}
+                </div>
+
+                {latexCode && (
+                  <div className="space-y-3 pt-2 border-t border-border/60">
+                    <pre className="p-3 bg-white border border-border rounded-lg text-[10px] font-mono text-ink max-h-32 overflow-y-auto whitespace-pre-wrap">
+                      {latexCode}
+                    </pre>
+                    <div className="flex gap-2">
+                      <form
+                        action="https://www.overleaf.com/docs"
+                        method="POST"
+                        target="_blank"
+                        className="inline-block"
+                      >
+                        <input type="hidden" name="snip" value={latexCode} />
+                        <button
+                          type="submit"
+                          className="px-3 py-1.5 bg-indigo text-white text-xs font-semibold rounded-button hover:bg-opacity-95 flex items-center gap-1.5 shadow-sm transition-all"
+                        >
+                          Open in Overleaf <ExternalLink size={12} />
+                        </button>
+                      </form>
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([latexCode], { type: "text/plain;charset=utf-8" });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement("a");
+                          link.href = url;
+                          link.download = `${selectedApplicant.seeker.name.replace(/\s+/g, "_")}_Resume.tex`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="px-3 py-1.5 bg-white border border-border text-ink hover:bg-canvas text-xs font-semibold rounded-button flex items-center gap-1 shadow-sm transition-all"
+                      >
+                        Download .tex
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Candidate Profile Details (Education, Experience, Skills) */}
               {selectedApplicant.seeker.profile ? (
@@ -341,7 +452,7 @@ export const RecruiterDashboardPage = () => {
 
             <div className="border-t border-border pt-4 mt-6">
               <button
-                onClick={() => setSelectedApplicant(null)}
+                onClick={() => handleSelectApplicant(null)}
                 className="w-full py-2.5 bg-canvas border border-border text-ink font-semibold rounded-button text-xs hover:bg-border/20"
               >
                 Close Candidate Review

@@ -36,6 +36,13 @@ aiRouter.post(
 );
 
 aiRouter.post(
+  "/recruiter/latex-resume",
+  protect as any,
+  authorize("recruiter") as any,
+  aiController.generateSeekerLatexResume as any
+);
+
+aiRouter.post(
   "/chat",
   protect as any,
   authorize("seeker") as any,

@@ -229,6 +229,7 @@ export const seedDB = async () => {
     const seekerUser = await User.create({
       name: "Priya Patel",
       email: "seeker@example.com",
+      phone: "+918791111634",
       passwordHash,
       role: "seeker",
       verified: true,
@@ -238,6 +239,7 @@ export const seedDB = async () => {
     const seekerDemoUser = await User.create({
       name: "Priya Patel (Demo)",
       email: "seeker@demo.com",
+      phone: "+918791111634",
       passwordHash: demoPasswordHash,
       role: "seeker",
       verified: true,

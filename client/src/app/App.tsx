@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
-import { Briefcase, FileText, CheckSquare, User, Compass, LogOut, Sparkles } from "lucide-react";
+import { Briefcase, FileText, CheckSquare, User, Compass, LogOut, Sparkles, Bell } from "lucide-react";
 import Providers from "./providers";
 import AuthPage from "../pages/AuthPage";
 import OnboardingPage from "../pages/OnboardingPage";
@@ -13,6 +13,7 @@ import ResumeAnalyzerPage from "../pages/ResumeAnalyzerPage";
 import SkillGapPage from "../pages/SkillGapPage";
 import useAuthStore from "../store/auth.store";
 import useAuth from "../features/useAuth";
+import useNotifications from "../features/useNotifications";
 import AiChatbot from "../components/AiChatbot";
 
 // Custom inline SVGs to bypass missing lucide-react typings
@@ -184,6 +185,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { useGetMyNotifications, useMarkNotificationRead } = useNotifications();
+  const isSeeker = isAuthenticated && user?.role === "seeker";
+  // Always call the hook unconditionally (Rules of Hooks), but disable it for non-seekers
+  const { data: notifData } = useGetMyNotifications(isSeeker);
+  const markReadMutation = useMarkNotificationRead();
+  const notifications = notifData?.data || [];
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
+
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-canvas flex flex-col relative overflow-hidden">
@@ -272,6 +282,72 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2">
+            {isSeeker && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 rounded-full hover:bg-canvas text-text-muted hover:text-ink transition-colors relative"
+                  title="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose rounded-full animate-pulse border border-surface" />
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-3 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 p-4 space-y-3 max-h-96 overflow-y-auto">
+                    <div className="flex justify-between items-center pb-2 border-b border-border">
+                      <span className="text-xs font-bold text-ink uppercase tracking-wider">AI Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={async () => {
+                            const unreadList = notifications.filter((n: any) => !n.read);
+                            for (const n of unreadList) {
+                              await markReadMutation.mutateAsync({ id: n._id });
+                            }
+                          }}
+                          className="text-[10px] text-indigo hover:underline font-semibold"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-6 text-text-muted text-xs">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 animate-fadeIn">
+                        {notifications.map((n: any) => (
+                          <div
+                            key={n._id}
+                            onClick={() => {
+                              if (!n.read) {
+                                markReadMutation.mutate({ id: n._id });
+                              }
+                            }}
+                            className={`p-3 rounded-lg border text-[11px] transition-all cursor-pointer hover:shadow-sm ${
+                              n.read
+                                ? "bg-surface border-border/40 text-text-muted"
+                                : "bg-indigo-tint/15 border-indigo/20 text-ink font-medium"
+                            }`}
+                          >
+                            <p className="leading-normal">{n.message}</p>
+                            <span className="text-[9px] text-text-muted mt-1.5 block">
+                              {new Date(n.createdAt).toLocaleDateString(undefined, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover:bg-canvas text-text-muted hover:text-ink transition-colors"

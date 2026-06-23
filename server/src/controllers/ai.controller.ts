@@ -2,6 +2,8 @@ import { Response, NextFunction } from "express";
 import { z } from "zod";
 import SeekerProfile from "../models/profile.model";
 import Job from "../models/job.model";
+import User from "../models/user.model";
+import Application from "../models/application.model";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import * as groqService from "../services/ai/groq.service";
 
@@ -156,6 +158,67 @@ export const chatWithAi = async (
     res.status(200).json({
       success: true,
       data: { reply },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const generateSeekerLatexResume = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { seekerId } = req.body;
+    if (!seekerId) {
+      res.status(400).json({
+        success: false,
+        error: { message: "seekerId is required." },
+      });
+      return;
+    }
+
+    const seekerUser = await User.findById(seekerId);
+    if (!seekerUser) {
+      res.status(404).json({
+        success: false,
+        error: { message: "Seeker not found." },
+      });
+      return;
+    }
+
+    const profile = await SeekerProfile.findOne({ userId: seekerId });
+    if (!profile) {
+      res.status(404).json({
+        success: false,
+        error: { message: "Seeker profile not found." },
+      });
+      return;
+    }
+
+    // Verify recruiter has a job that this seeker applied to
+    const recruiterId = req.user?._id;
+    const applications = await Application.find({ seekerId }).populate("jobId");
+    const isApplied = applications.some((app: any) => app.jobId?.recruiterId?.toString() === recruiterId?.toString());
+
+    if (!isApplied) {
+      res.status(403).json({
+        success: false,
+        error: { message: "You are not authorized to view this candidate's LaTeX resume." },
+      });
+      return;
+    }
+
+    const latex = groqService.generateLatexResume(
+      profile,
+      seekerUser.email || "",
+      seekerUser.name || "Job Seeker"
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { latex },
     });
   } catch (error) {
     next(error);

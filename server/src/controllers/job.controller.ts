@@ -4,9 +4,11 @@ import Job from "../models/job.model";
 import SeekerProfile from "../models/profile.model";
 import Application from "../models/application.model";
 import Notification from "../models/notification.model";
+import User from "../models/user.model";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { getEmbedding } from "../services/ai/groq.service";
 import { calculateJobMatch } from "../services/matching/matching.service";
+import { sendSmsNotification } from "../services/sms.service";
 
 // Validation Schema for creating a job
 export const jobCreateSchema = z.object({
@@ -150,6 +152,12 @@ const autoApplySeekersForJob = async (job: any): Promise<void> => {
           type: "auto-apply",
           message,
         });
+
+        // Send phone SMS notification if phone number is registered
+        const seekerUser = await User.findById(profile.userId);
+        if (seekerUser && seekerUser.phone) {
+          await sendSmsNotification(seekerUser.phone, message);
+        }
       }
     }
   } catch (err) {
