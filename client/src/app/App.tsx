@@ -235,19 +235,62 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       ];
 
   return (
-    <div className="min-h-screen bg-canvas flex flex-col md:flex-row relative overflow-hidden">
+    <div className="min-h-screen bg-canvas flex flex-col relative overflow-hidden">
       {/* Decorative Blob */}
       <div className="absolute top-[20%] left-[20%] w-[350px] h-[350px] rounded-full bg-indigo/5 dark:bg-indigo/8 blur-[100px] pointer-events-none z-0 glowing-blob animate-pulse" />
       <div className="absolute bottom-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-coral/5 dark:bg-coral/8 blur-[100px] pointer-events-none z-0 glowing-blob animate-pulse" style={{ animationDelay: "3s" }} />
 
-      {/* Desktop Left Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-border p-6 space-y-6 relative z-10 shadow-sm">
-        <Link to="/" className="text-xl font-display font-bold tracking-tight text-ink flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-indigo flex items-center justify-center text-white text-xs font-mono">G</span>
-          AI Job Seeker
-        </Link>
-        
-        <nav className="flex-1 space-y-2">
+      {/* Sticky Top Horizontal Navbar */}
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/80 backdrop-blur-md shadow-premium">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="text-xl font-display font-bold tracking-tight text-ink flex items-center gap-2">
+            <span className="w-6 h-6 rounded-lg bg-indigo flex items-center justify-center text-white text-xs font-mono">G</span>
+            AI Job Seeker
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-button text-sm font-medium transition-all ${
+                    isActive
+                      ? "bg-indigo-tint text-indigo font-semibold"
+                      : "text-text-muted hover:bg-canvas hover:text-ink"
+                  }`}
+                >
+                  <Icon size={16} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-canvas text-text-muted hover:text-ink transition-colors"
+              title="Toggle Theme"
+            >
+              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <button
+              onClick={logout}
+              className="p-2 rounded-full text-rose hover:bg-rose-tint transition-all"
+              title="Log Out"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Horizontal Sub-Navigation Row */}
+        <nav className="md:hidden flex items-center gap-1 border-t border-border overflow-x-auto py-2.5 px-4 whitespace-nowrap scrollbar-none bg-surface/50">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -255,84 +298,24 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-button text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-button text-xs font-medium transition-all shrink-0 ${
                   isActive
-                    ? "bg-indigo-tint text-indigo"
+                    ? "bg-indigo-tint text-indigo font-semibold"
                     : "text-text-muted hover:bg-canvas hover:text-ink"
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={14} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-
-        {/* Sidebar Footer Controls */}
-        <div className="flex flex-col gap-2 pt-4 border-t border-border">
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text-muted hover:bg-canvas rounded-button transition-all w-full"
-          >
-            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            {theme === "light" ? "Dark Mode" : "Light Mode"}
-          </button>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose hover:bg-rose-tint rounded-button transition-all w-full"
-          >
-            <LogOut size={18} />
-            Log Out
-          </button>
-        </div>
-      </aside>
+      </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen pb-20 md:pb-0 relative z-10">
-        <header className="md:hidden border-b border-border bg-white py-4 px-6 flex items-center justify-between">
-          <span className="text-lg font-display font-bold tracking-tight text-ink flex items-center gap-2">
-            <span className="w-5 h-5 rounded bg-indigo flex items-center justify-center text-white text-[10px] font-mono">G</span>
-            AI Job Seeker
-          </span>
-          <div className="flex gap-2.5">
-            <button
-              onClick={toggleTheme}
-              className="w-8 h-8 rounded-full bg-canvas border border-border text-ink flex items-center justify-center text-xs font-bold"
-              title="Toggle Theme"
-            >
-              {theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
-            </button>
-            <button
-              onClick={logout}
-              className="w-8 h-8 rounded-full bg-rose-tint text-rose flex items-center justify-center text-xs font-bold"
-              title="Log Out"
-            >
-              <LogOut size={14} />
-            </button>
-          </div>
-        </header>
-        <main className="flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">{children}</main>
-      </div>
-
-      {/* Mobile Bottom Tab Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border py-2 px-4 flex justify-around items-center z-50">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center gap-1 text-[10px] font-medium transition-all ${
-                isActive ? "text-indigo" : "text-text-muted"
-              }`}
-            >
-              <Icon size={20} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <main className="flex-1 p-6 md:p-8 max-w-6xl w-full mx-auto relative z-10">
+        {children}
+      </main>
     </div>
   );
 };
