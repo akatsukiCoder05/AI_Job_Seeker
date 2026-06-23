@@ -48,25 +48,25 @@ const seekerProfileSchema = new Schema<ISeekerProfile>(
     },
     education: [
       {
-        degree: { type: String, required: true },
-        institution: { type: String, required: true },
+        degree: { type: String },
+        institution: { type: String },
         year: { type: Number },
       },
     ],
     skills: [{ type: String, trim: true }],
     projects: [
       {
-        title: { type: String, required: true },
-        description: { type: String, required: true },
+        title: { type: String },
+        description: { type: String },
         tech: [{ type: String, trim: true }],
       },
     ],
     experience: [
       {
-        role: { type: String, required: true },
-        org: { type: String, required: true },
+        role: { type: String },
+        org: { type: String },
         durationMonths: { type: Number },
-        summary: { type: String, required: true },
+        summary: { type: String },
       },
     ],
     preferences: {

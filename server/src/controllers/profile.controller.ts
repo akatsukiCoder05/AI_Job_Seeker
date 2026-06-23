@@ -10,33 +10,36 @@ import { parseResumeText, getEmbedding } from "../services/ai/groq.service";
 export const profileUpdateSchema = z.object({
   education: z.array(
     z.object({
-      degree: z.string().min(1, "Degree is required"),
-      institution: z.string().min(1, "Institution is required"),
-      year: z.number().min(1950).max(new Date().getFullYear() + 5).nullable().optional(),
+      degree: z.string().nullable().optional().transform((val) => val ?? ""),
+      institution: z.string().nullable().optional().transform((val) => val ?? ""),
+      year: z.number().min(0).max(new Date().getFullYear() + 5).nullable().optional().transform((val) => val ?? null),
     })
-  ).default([]),
-  skills: z.array(z.string()).default([]),
+  ).nullable().optional().transform((val) => val ?? []),
+  skills: z.array(z.string()).nullable().optional().transform((val) => val ?? []),
   projects: z.array(
     z.object({
-      title: z.string().min(1, "Project title is required"),
-      description: z.string().min(1, "Project description is required"),
-      tech: z.array(z.string()).default([]),
+      title: z.string().nullable().optional().transform((val) => val ?? ""),
+      description: z.string().nullable().optional().transform((val) => val ?? ""),
+      tech: z.array(z.string()).nullable().optional().transform((val) => val ?? []),
     })
-  ).default([]),
+  ).nullable().optional().transform((val) => val ?? []),
   experience: z.array(
     z.object({
-      role: z.string().min(1, "Role is required"),
-      org: z.string().min(1, "Organization is required"),
-      durationMonths: z.number().min(0).nullable().optional(),
-      summary: z.string().min(1, "Summary is required"),
+      role: z.string().nullable().optional().transform((val) => val ?? ""),
+      org: z.string().nullable().optional().transform((val) => val ?? ""),
+      durationMonths: z.number().min(0).nullable().optional().transform((val) => val ?? null),
+      summary: z.string().nullable().optional().transform((val) => val ?? ""),
     })
-  ).default([]),
-  preferences: z.object({
-    roles: z.array(z.string()).default([]),
-    locations: z.array(z.string()).default([]),
-    workMode: z.enum(["remote", "onsite", "hybrid", "any"]).default("any"),
-  }),
-  resumeUrl: z.string().optional(),
+  ).nullable().optional().transform((val) => val ?? []),
+  preferences: z.preprocess(
+    (val) => val ?? {},
+    z.object({
+      roles: z.array(z.string()).nullable().optional().transform((val) => val ?? []),
+      locations: z.array(z.string()).nullable().optional().transform((val) => val ?? []),
+      workMode: z.enum(["remote", "onsite", "hybrid", "any"]).nullable().optional().transform((val) => val ?? "any"),
+    })
+  ).default({}),
+  resumeUrl: z.string().nullable().optional().transform((val) => val ?? ""),
 });
 
 // Calculate completeness helper
