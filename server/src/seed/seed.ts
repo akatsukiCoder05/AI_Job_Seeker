@@ -205,6 +205,7 @@ export const seedDB = async () => {
     // 2. Create standard Recruiter demo account
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash("password123", salt);
+    const demoPasswordHash = await bcrypt.hash("Demo@1234", salt);
 
     const recruiterUser = await User.create({
       name: "Tony Stark",
@@ -214,6 +215,15 @@ export const seedDB = async () => {
       verified: true,
     });
     console.log("👤 Created Recruiter account: recruiter@example.com");
+
+    const recruiterDemoUser = await User.create({
+      name: "Tony Stark (Demo)",
+      email: "recruiter@demo.com",
+      passwordHash: demoPasswordHash,
+      role: "recruiter",
+      verified: true,
+    });
+    console.log("👤 Created Recruiter account: recruiter@demo.com");
 
     // Create standard Seeker demo account
     const seekerUser = await User.create({
@@ -225,6 +235,15 @@ export const seedDB = async () => {
     });
     console.log("👤 Created Seeker account: seeker@example.com");
 
+    const seekerDemoUser = await User.create({
+      name: "Priya Patel (Demo)",
+      email: "seeker@demo.com",
+      passwordHash: demoPasswordHash,
+      role: "seeker",
+      verified: true,
+    });
+    console.log("👤 Created Seeker account: seeker@demo.com");
+
     // 3. Pre-create Seeker Profile with 100% completeness
     const profileText = `
       Skills: React, Node, TypeScript, MongoDB, Express, Html, Css, Tailwind, Python, Git
@@ -234,42 +253,47 @@ export const seedDB = async () => {
     `;
     const seekerEmbedding = await getEmbedding(profileText);
 
-    await SeekerProfile.create({
-      userId: seekerUser._id,
-      education: [
-        {
-          degree: "B.Tech Computer Science",
-          institution: "Indian Institute of Technology (IIT)",
-          year: 2025,
-        }
-      ],
-      skills: ["React", "Node", "TypeScript", "MongoDB", "Express", "HTML", "CSS", "Tailwind", "Python", "Git"],
-      projects: [
-        {
-          title: "E-Commerce Web Application",
-          description: "Full-stack e-commerce marketplace featuring product catalog, shopping cart, and mock payment gateway integration.",
-          tech: ["React", "Node.js", "Express", "MongoDB"],
-        }
-      ],
-      experience: [
-        {
-          role: "Software Development Intern",
-          org: "InnovateTech Solutions",
-          durationMonths: 6,
-          summary: "Developed frontend user dashboard components using React and helped refactor legacy CSS to modern Tailwind code.",
-        }
-      ],
-      preferences: {
-        roles: ["Frontend Developer", "Software Engineer"],
-        locations: ["Bengaluru", "Mumbai"],
-        workMode: "remote",
-      },
-      resumeUrl: "/uploads/resumes/1781792066388_sample_resume.txt",
-      resumeText: "Sample resume text extracted",
-      completeness: 100,
-      embedding: seekerEmbedding,
-    });
-    console.log("📋 Pre-seeded Seeker Profile for seeker@example.com (100% complete)");
+    const createProfile = async (userId: any, email: string) => {
+      await SeekerProfile.create({
+        userId,
+        education: [
+          {
+            degree: "B.Tech Computer Science",
+            institution: "Indian Institute of Technology (IIT)",
+            year: 2025,
+          }
+        ],
+        skills: ["React", "Node", "TypeScript", "MongoDB", "Express", "HTML", "CSS", "Tailwind", "Python", "Git"],
+        projects: [
+          {
+            title: "E-Commerce Web Application",
+            description: "Full-stack e-commerce marketplace featuring product catalog, shopping cart, and mock payment gateway integration.",
+            tech: ["React", "Node.js", "Express", "MongoDB"],
+          }
+        ],
+        experience: [
+          {
+            role: "Software Development Intern",
+            org: "InnovateTech Solutions",
+            durationMonths: 6,
+            summary: "Developed frontend user dashboard components using React and helped refactor legacy CSS to modern Tailwind code.",
+          }
+        ],
+        preferences: {
+          roles: ["Frontend Developer", "Software Engineer"],
+          locations: ["Bengaluru", "Mumbai"],
+          workMode: "remote",
+        },
+        resumeUrl: "/uploads/resumes/1781792066388_sample_resume.txt",
+        resumeText: "Sample resume text extracted",
+        completeness: 100,
+        embedding: seekerEmbedding,
+      });
+      console.log(`📋 Pre-seeded Seeker Profile for ${email} (100% complete)`);
+    };
+
+    await createProfile(seekerUser._id, "seeker@example.com");
+    await createProfile(seekerDemoUser._id, "seeker@demo.com");
 
     // 4. Seed job postings with embeddings
     console.log(`💼 Seeding ${jobsData.length} job postings...`);
