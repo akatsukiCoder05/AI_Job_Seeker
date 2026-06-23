@@ -97,6 +97,8 @@ export interface ParsedProfile {
  * Generate parsed profile from resume text using Groq Structured Outputs, or fallback to mock parser.
  */
 export const parseResumeText = async (text: string): Promise<ParsedProfile> => {
+  console.log(`ℹ️ [AI SERVICE] parseResumeText called. Length of text: ${text.length}. isGroqConfigured: ${isGroqConfigured}`);
+  
   if (!isGroqConfigured || !groq) {
     console.log("⚠️ [AI SERVICE] GROQ_API_KEY missing. Running mock resume parser.");
     return runMockResumeParser(text);
@@ -138,6 +140,7 @@ export const parseResumeText = async (text: string): Promise<ParsedProfile> => {
       ${text}
     `;
 
+    console.log("ℹ️ [AI SERVICE] Sending request to Groq...");
     const chatCompletion = await groq.chat.completions.create({
       model: MODELS.text,
       messages: [
@@ -154,10 +157,12 @@ export const parseResumeText = async (text: string): Promise<ParsedProfile> => {
     });
 
     const content = chatCompletion.choices[0]?.message?.content || "{}";
+    console.log(`ℹ️ [AI SERVICE] Groq responded: ${content}`);
     const parsedJson = JSON.parse(content);
     return parsedJson as ParsedProfile;
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ [AI SERVICE] Groq resume parsing error:", error);
+    console.error("❌ [AI SERVICE] Error details:", error.message || error);
     return runMockResumeParser(text);
   }
 };

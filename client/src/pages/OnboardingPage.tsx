@@ -36,7 +36,7 @@ export const OnboardingPage = () => {
 
   // Sync existing profile if any
   useEffect(() => {
-    if (profile) {
+    if (profile && step === "upload") {
       setEducation(profile.education || []);
       setSkills(profile.skills || []);
       setProjects(profile.projects || []);
@@ -44,7 +44,7 @@ export const OnboardingPage = () => {
       setPreferences(profile.preferences || { roles: [], locations: [], workMode: "any" });
       setResumeUrl(profile.resumeUrl || "");
     }
-  }, [profile]);
+  }, [profile, step]);
 
   // Handle file drop/select
   const handleFileUpload = async (file: File) => {
