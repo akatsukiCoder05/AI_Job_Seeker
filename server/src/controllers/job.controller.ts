@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import Job from "../models/job.model";
 import SeekerProfile from "../models/profile.model";
+import Application from "../models/application.model";
+import Notification from "../models/notification.model";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { getEmbedding } from "../services/ai/groq.service";
 import { calculateJobMatch } from "../services/matching/matching.service";
@@ -111,6 +113,50 @@ export const getJobById = async (
   }
 };
 
+// Helper to run background matching and auto-apply seekers to a new job
+const autoApplySeekersForJob = async (job: any): Promise<void> => {
+  try {
+    // 1. Fetch all seeker profiles with a valid resume
+    const profiles = await SeekerProfile.find({ resumeUrl: { $exists: true, $ne: "" } });
+    
+    for (const profile of profiles) {
+      // Calculate compatibility match score
+      const match = calculateJobMatch(profile, job);
+      
+      // If the seeker is a strong match (>= 75%)
+      if (match.score >= 75) {
+        // Prevent duplicate applications
+        const existingApp = await Application.findOne({ seekerId: profile.userId, jobId: job._id });
+        if (existingApp) continue;
+        
+        // Auto-apply: Create application
+        await Application.create({
+          seekerId: profile.userId,
+          jobId: job._id,
+          resumeUrl: profile.resumeUrl,
+          matchScore: match.score,
+          status: "applied",
+        });
+        
+        // Create Notification alert
+        const matchedSkillsList = match.matchedSkills.slice(0, 3).join(", ");
+        const remainingStr = match.matchedSkills.length > 3 ? ` and ${match.matchedSkills.length - 3} others` : "";
+        const skillsSnippet = matchedSkillsList ? ` (matching your skills: ${matchedSkillsList}${remainingStr})` : "";
+        
+        const message = `AI has tailored your LaTeX resume template to emphasize matching competencies${skillsSnippet} and automatically applied you to the '${job.title}' vacancy at '${job.company}' with a strong compatibility score of ${match.score}%!`;
+        
+        await Notification.create({
+          userId: profile.userId,
+          type: "auto-apply",
+          message,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error in background auto-apply process:", err);
+  }
+};
+
 // Create a new job posting (recruiter only)
 export const createJob = async (
   req: AuthenticatedRequest,
@@ -140,6 +186,9 @@ export const createJob = async (
       recruiterId: req.user?._id,
       embedding,
     });
+
+    // Run background auto-apply matching process (non-blocking)
+    autoApplySeekersForJob(job).catch(err => console.error("Auto-apply helper crash:", err));
 
     res.status(201).json({
       success: true,

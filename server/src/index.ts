@@ -13,6 +13,7 @@ import recommendationRouter from "./routes/recommendation.routes";
 import applicationRouter from "./routes/application.routes";
 import savedJobRouter from "./routes/savedJob.routes";
 import aiRouter from "./routes/ai.routes";
+import notificationRouter from "./routes/notification.routes";
 import errorHandler from "./middleware/errorHandler";
 
 const app = express();
@@ -61,6 +62,7 @@ app.use("/api/recommendations", recommendationRouter);
 app.use("/api/applications", applicationRouter);
 app.use("/api/saved", savedJobRouter);
 app.use("/api/ai", aiRouter);
+app.use("/api/notifications", notificationRouter);
 
 // Centralized error handling
 app.use(errorHandler);
