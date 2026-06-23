@@ -60,10 +60,14 @@ export const AuthPage = () => {
 
 
   return (
-    <div className="flex min-h-[85vh] w-full max-w-5xl bg-white rounded-card overflow-hidden shadow-card border border-border my-6">
+    <div className="flex min-h-[85vh] w-full max-w-5xl rounded-card overflow-hidden glass-card my-6">
       {/* Left panel: Info Illustration (desktop only) */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-ink-soft p-12 text-white border-r border-border">
-        <div>
+      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-ink-soft via-ink-soft to-indigo/40 p-12 text-white border-r border-border relative overflow-hidden">
+        {/* Glow backdrop blobs for sidebar */}
+        <div className="absolute top-1/4 left-1/4 w-60 h-60 rounded-full bg-indigo/10 blur-[80px] glowing-blob pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full bg-coral/5 blur-[60px] glowing-blob pointer-events-none" style={{ animationDelay: "3s" }} />
+
+        <div className="relative z-10">
           <span className="text-xl font-display font-bold tracking-tight flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-indigo flex items-center justify-center text-white text-xs font-mono">G</span>
             AI Job Seeker
@@ -75,7 +79,7 @@ export const AuthPage = () => {
             Our AI-powered scoring matches your skills directly with active openings. See why you match, identify skill gaps, and apply in one click.
           </p>
         </div>
-        <div>
+        <div className="relative z-10">
           <p className="text-xs text-text-muted">
             🔒 Your personal information and resume data are securely protected.
           </p>
@@ -83,7 +87,7 @@ export const AuthPage = () => {
       </div>
 
       {/* Right panel: Authentication forms */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 md:px-12 bg-white">
+      <div className="flex-1 flex flex-col justify-center px-6 py-12 md:px-12 bg-surface relative overflow-hidden">
         <div className="max-w-md w-full mx-auto">
           {/* Header */}
           <div className="mb-8 text-center lg:text-left">
@@ -175,9 +179,9 @@ export const AuthPage = () => {
                 <button
                   type="button"
                   onClick={() => setRole("seeker")}
-                  className={`p-4 rounded-card border text-left flex flex-col justify-between h-28 transition-all ${
+                  className={`p-4 rounded-card border text-left flex flex-col justify-between h-28 transition-all hover:-translate-y-0.5 hover:shadow-sm ${
                     role === "seeker"
-                      ? "border-indigo bg-indigo-tint/50 text-indigo"
+                      ? "border-indigo bg-indigo-tint/30 text-indigo shadow-sm"
                       : "border-border hover:bg-canvas text-text-muted"
                   }`}
                 >
@@ -190,9 +194,9 @@ export const AuthPage = () => {
                 <button
                   type="button"
                   onClick={() => setRole("recruiter")}
-                  className={`p-4 rounded-card border text-left flex flex-col justify-between h-28 transition-all ${
+                  className={`p-4 rounded-card border text-left flex flex-col justify-between h-28 transition-all hover:-translate-y-0.5 hover:shadow-sm ${
                     role === "recruiter"
-                      ? "border-indigo bg-indigo-tint/50 text-indigo"
+                      ? "border-indigo bg-indigo-tint/30 text-indigo shadow-sm"
                       : "border-border hover:bg-canvas text-text-muted"
                   }`}
                 >

@@ -42,19 +42,27 @@ export const ResumeAnalyzerPage: React.FC = () => {
   // Handle case where profile does not exist or has no resume text uploaded
   if (!profile || !profile.resumeUrl) {
     return (
-      <div className="max-w-md mx-auto my-12 text-center p-8 bg-white border border-border rounded-card shadow-sm space-y-6">
-        <div className="w-16 h-16 bg-rose-tint text-rose rounded-full flex items-center justify-center mx-auto">
-          <FileText size={32} />
+      <div className="max-w-md mx-auto my-12 text-center p-8 glass-card rounded-card shadow-premium space-y-6 relative overflow-hidden">
+        {/* Glow backdrop blobs */}
+        <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-rose/10 blur-[40px] pointer-events-none glowing-blob" />
+        
+        <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-rose-tint/50 border border-rose/10 animate-ping opacity-75" />
+          <div className="relative w-12 h-12 bg-gradient-to-tr from-rose to-rose/80 text-white rounded-full flex items-center justify-center shadow-premium">
+            <FileText size={20} />
+          </div>
         </div>
-        <div className="space-y-2">
+
+        <div className="space-y-2 relative z-10">
           <h2 className="text-xl font-bold font-display text-ink">No Resume Uploaded</h2>
-          <p className="text-sm text-text-muted">
+          <p className="text-xs text-text-muted max-w-xs mx-auto leading-relaxed">
             We need your parsed resume to perform ATS and skill gap analysis. Please upload your resume in your profile.
           </p>
         </div>
+
         <Link
           to="/profile"
-          className="inline-flex items-center justify-center px-6 py-2.5 bg-indigo text-white font-medium rounded-button hover:bg-opacity-95 transition-all text-sm"
+          className="inline-flex items-center justify-center px-6 py-2.5 bg-indigo text-white text-xs font-semibold rounded-button shadow-premium hover:bg-opacity-95 active:scale-95 transition-all relative z-10"
         >
           Go to Profile Onboarding
         </Link>

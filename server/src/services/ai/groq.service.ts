@@ -592,3 +592,82 @@ ${expItems || "No work experience."}
 
   return template;
 };
+
+const getMockChatbotReply = (message: string, profile: ISeekerProfile | null, userName: string): string => {
+  const msg = message.toLowerCase();
+  const name = userName.split(" ")[0];
+
+  if (msg.includes("resume") || msg.includes("ats") || msg.includes("cv")) {
+    return `Hi ${name}! 📄 Here are key ways to optimize your resume for ATS scanners:
+1. **Use clear structural headings** (like "Skills", "Education", "Projects", "Experience").
+2. **Quantify achievements** (e.g., "Created a task dashboard that improved user engagement by 20%").
+3. **Incorporate keyword terms** found directly in your target job descriptions.
+You can use the **Resume Analyzer** tab in the sidebar to run a complete diagnostic scan of your profile!`;
+  }
+  if (msg.includes("skill") || msg.includes("gap") || msg.includes("learn")) {
+    return `Hey ${name}, bridging your technical skill gaps is essential! 🚀
+- **For Frontend roles**: Master JavaScript, modern **React**, and **TypeScript**.
+- **For Backend roles**: Master **Node.js/Express** and SQL/NoSQL databases like PostgreSQL or MongoDB.
+- **For general workflow**: Understand Git, GitHub, and containerization with Docker.
+Check out the **Browse Jobs** page and click "View Breakdown" to analyze specific gaps against real-world listings!`;
+  }
+  if (msg.includes("interview") || msg.includes("prepare") || msg.includes("question")) {
+    return `Preparation is key, ${name}! 💡 Focus on these main areas:
+1. **Behavioral Questions**: Structure your project stories using the **STAR method** (Situation, Task, Action, Result).
+2. **Core Concepts**: Be prepared to explain closures, asynchronous JavaScript (Promises/Async-Await), and event loops.
+3. **Database & Schema**: Know how your project collections are structured and relate to each other.
+Would you like me to prompt you with a sample technical interview question?`;
+  }
+  if (msg.includes("project") || msg.includes("portfolio")) {
+    return `Building production-ready projects will set you apart! 🛠️ Consider creating:
+1. A **Full-stack web application** (like an AI-powered job board) implementing complete database CRUD.
+2. A **utility tool using external APIs** (like a mock dashboard) demonstrating API handling.
+3. A responsive **Developer Portfolio** to showcase your contact details and active links.`;
+  }
+  
+  return `Hi ${name}! I am your personal AI Career Coach. 🎓 I can assist you to:
+- Review your resume to improve your ATS score.
+- Identify and bridge skill gaps for active jobs.
+- Plan what projects or frameworks to learn next.
+What would you like to discuss today?`;
+};
+
+export const chatWithAi = async (
+  message: string,
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  profile: ISeekerProfile | null,
+  userName: string
+): Promise<string> => {
+  if (isGroqConfigured && groq) {
+    try {
+      const profileContext = profile 
+        ? `User Profile Context:\nName: ${userName}\nSkills: ${profile.skills?.join(", ")}\nEducation: ${profile.education?.map((e) => `${e.degree} from ${e.institution}`).join("; ")}\nProjects: ${profile.projects?.map((p) => p.title).join("; ")}`
+        : "User Profile Context: Profile not completed yet.";
+      
+      const messages = [
+        {
+          role: "system",
+          content: `You are a professional, helpful, and friendly AI Career Coach for the "AI Job Seeker" platform.
+          Your goal is to guide freshers and graduates to improve their skills, resumes, and interview skills.
+          Keep your answers concise, encouraging, and highly actionable.
+          Use markdown formatting and lists where appropriate.
+          ${profileContext}`
+        },
+        ...history,
+        { role: "user", content: message }
+      ];
+
+      const chatCompletion = await groq.chat.completions.create({
+        model: MODELS.text,
+        messages: messages as any,
+      });
+
+      return chatCompletion.choices[0]?.message?.content || "I'm having trouble connecting to my brain. Ask me again shortly!";
+    } catch (error) {
+      console.error("❌ [AI SERVICE] Groq Chat error:", error);
+    }
+  }
+
+  // Fallback to high-fidelity mock chatbot
+  return getMockChatbotReply(message, profile, userName);
+};

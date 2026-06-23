@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckSquare, Calendar, ArrowRight } from "lucide-react";
+import { CheckSquare, Calendar, ArrowRight, Sparkles } from "lucide-react";
 import useApplications, { Application } from "../features/useApplications";
 import MatchRing from "../components/match-ring/MatchRing";
 import JobDetailsDrawer from "../components/jobs/JobDetailsDrawer";
@@ -83,17 +83,43 @@ export const ApplicationsPage = () => {
 
       {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 bg-white rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">Total Applications</span>
-          <div className="mt-2 text-4xl font-mono font-bold text-indigo">{totalApplied}</div>
+        <div className="p-6 bg-surface rounded-card border border-border/80 shadow-premium hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-indigo" />
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">Total Applications</span>
+              <div className="mt-3 text-4xl font-mono font-bold text-indigo">{totalApplied}</div>
+            </div>
+            <span className="p-2.5 rounded-lg bg-indigo-tint/50 text-indigo shrink-0">
+              <CheckSquare size={18} />
+            </span>
+          </div>
         </div>
-        <div className="p-6 bg-white rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">Shortlisted / Interviews</span>
-          <div className="mt-2 text-4xl font-mono font-bold text-emerald">{shortlisted}</div>
+
+        <div className="p-6 bg-surface rounded-card border border-border/80 shadow-premium hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald" />
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">Shortlisted / Interviews</span>
+              <div className="mt-3 text-4xl font-mono font-bold text-emerald">{shortlisted}</div>
+            </div>
+            <span className="p-2.5 rounded-lg bg-emerald-tint/50 text-emerald shrink-0">
+              <Sparkles size={18} />
+            </span>
+          </div>
         </div>
-        <div className="p-6 bg-white rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">Response Rate</span>
-          <div className="mt-2 text-4xl font-mono font-bold text-amber">{responseRate}%</div>
+
+        <div className="p-6 bg-surface rounded-card border border-border/80 shadow-premium hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-amber" />
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">Response Rate</span>
+              <div className="mt-3 text-4xl font-mono font-bold text-amber">{responseRate}%</div>
+            </div>
+            <span className="p-2.5 rounded-lg bg-amber-tint/50 text-amber shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -117,17 +143,22 @@ export const ApplicationsPage = () => {
         </div>
 
         {filteredApps.length === 0 ? (
-          <div className="p-16 text-center bg-white border border-border rounded-card max-w-md mx-auto space-y-4">
-            <CheckSquare size={40} className="text-text-muted mx-auto" />
-            <h3 className="text-lg font-bold text-ink">No applications found</h3>
-            <p className="text-sm text-text-muted">
-              {statusFilter === "all"
-                ? "You haven't submitted any job applications yet."
-                : `You don't have any applications currently marked as "${statusFilter === "review" ? "Under Review" : statusFilter}".`}
-            </p>
+          <div className="p-12 text-center glass-card rounded-card max-w-md mx-auto space-y-5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-tint/5 to-coral-tint/5 opacity-50 pointer-events-none" />
+            <div className="w-16 h-16 rounded-full bg-canvas border border-border flex items-center justify-center mx-auto text-text-muted">
+              <CheckSquare size={26} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-ink font-display">No applications found</h3>
+              <p className="text-xs text-text-muted mt-2 max-w-xs mx-auto leading-relaxed">
+                {statusFilter === "all"
+                  ? "You haven't submitted any job applications yet. Complete your profile and apply to ranked recommendation listings."
+                  : `You don't have any applications currently marked as "${statusFilter === "review" ? "Under Review" : statusFilter}".`}
+              </p>
+            </div>
             {statusFilter === "all" && (
-              <Link to="/jobs" className="px-6 py-2 bg-indigo text-white text-sm font-medium rounded-button hover:bg-opacity-90 inline-block">
-                Browse Jobs
+              <Link to="/jobs" className="px-6 py-2.5 bg-indigo text-white text-xs font-semibold rounded-button shadow-premium hover:bg-opacity-95 active:scale-95 inline-flex items-center gap-1.5 transition-all">
+                Browse Active Jobs
               </Link>
             )}
           </div>

@@ -25,9 +25,9 @@ export const MatchRing: React.FC<MatchRingProps> = ({
 
   // Determine color theme based on score
   const getColor = (val: number) => {
-    if (val >= 75) return { stroke: "#12B886", text: "text-emerald-600", bg: "bg-emerald-50" }; // emerald
-    if (val >= 50) return { stroke: "#F5A524", text: "text-amber-600", bg: "bg-amber-50" }; // amber
-    return { stroke: "#F43F5E", text: "text-rose-600", bg: "bg-rose-50" }; // rose
+    if (val >= 75) return { stroke: "var(--color-emerald)", text: "text-emerald", bg: "bg-emerald-tint/10" }; // emerald
+    if (val >= 50) return { stroke: "var(--color-amber)", text: "text-amber", bg: "bg-amber-tint/10" }; // amber
+    return { stroke: "var(--color-rose)", text: "text-rose", bg: "bg-rose-tint/10" }; // rose
   };
 
   const colors = getColor(score);

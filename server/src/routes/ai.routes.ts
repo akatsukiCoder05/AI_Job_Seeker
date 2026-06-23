@@ -35,4 +35,11 @@ aiRouter.post(
   aiController.generateLatexResume as any
 );
 
+aiRouter.post(
+  "/chat",
+  protect as any,
+  authorize("seeker") as any,
+  aiController.chatWithAi as any
+);
+
 export default aiRouter;

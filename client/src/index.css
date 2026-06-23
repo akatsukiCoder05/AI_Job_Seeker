@@ -4,32 +4,114 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-ink: #0E1525;
+  --color-ink-soft: #1C2740;
+  --color-indigo: #4F46E5;
+  --color-indigo-tint: #EEF0FF;
+  --color-coral: #FF7A66;
+  --color-coral-tint: #FFF0EC;
+  --color-emerald: #12B886;
+  --color-amber: #F5A524;
+  --color-rose: #F43F5E;
+  --color-canvas: #F7F8FB;
+  --color-surface: #FFFFFF;
+  --color-border: #E6E9F0;
+  --color-text-muted: #64748B;
+  
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(230, 233, 240, 0.5);
+  --glass-blur: blur(16px);
+  --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] {
+  --color-ink: #F8FAFC;
+  --color-ink-soft: #1E293B;
+  --color-indigo: #6366F1;
+  --color-indigo-tint: #1E1B4B;
+  --color-coral: #FF8A7A;
+  --color-coral-tint: #451A03;
+  --color-emerald: #10B981;
+  --color-amber: #F59E0B;
+  --color-rose: #EF4444;
+  --color-canvas: #0A0F1D;
+  --color-surface: #111A2E;
+  --color-border: #22314E;
+  --color-text-muted: #94A3B8;
+
+  --glass-bg: rgba(17, 26, 46, 0.65);
+  --glass-border: rgba(34, 49, 78, 0.5);
+  --glass-blur: blur(16px);
+  --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 @layer base {
   body {
     @apply bg-canvas text-ink font-sans antialiased selection:bg-indigo-tint selection:text-indigo;
     text-rendering: optimizeLegibility;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-semibold tracking-tight;
   }
+
+  /* Soft border transitons */
+  div, header, aside, main, section, article {
+    @apply transition-colors duration-300;
+  }
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-premium);
+}
+
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Background blob animation */
+@keyframes float {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+.glowing-blob {
+  animation: float 8s ease-in-out infinite;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-canvas;
+  background: var(--color-canvas);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full hover:bg-text-muted transition-colors;
+  background: var(--color-border);
+  border-radius: 9999px;
 }
 
-/* Base interactive elements */
-a, button {
-  @apply transition-all duration-200;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Interactivity Scales */
+button:active:not(:disabled), a:active {
+  transform: scale(0.96);
+}
+
+/* Force standard bg-white to map to theme variable bg-surface */
+.bg-white {
+  background-color: var(--color-surface) !important;
 }

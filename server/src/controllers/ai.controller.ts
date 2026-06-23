@@ -142,3 +142,22 @@ export const generateLatexResume = async (
     next(error);
   }
 };
+
+export const chatWithAi = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { message, history } = req.body;
+    const profile = await SeekerProfile.findOne({ userId: req.user?._id });
+    const reply = await groqService.chatWithAi(message, history || [], profile, req.user?.name || "Job Seeker");
+    
+    res.status(200).json({
+      success: true,
+      data: { reply },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

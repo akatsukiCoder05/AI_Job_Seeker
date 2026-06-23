@@ -185,21 +185,43 @@ export const OnboardingPage = () => {
     <div className="max-w-4xl w-full mx-auto p-4 md:p-8">
       {/* Step 1: File Upload Screen */}
       {step === "upload" && (
-        <div className="bg-white rounded-card shadow-card border border-border p-8 md:p-12 text-center max-w-xl mx-auto space-y-6">
-          <div className="w-16 h-16 bg-indigo-tint text-indigo rounded-full flex items-center justify-center mx-auto">
-            <Upload size={32} />
+        <div className="glass-card p-8 md:p-12 text-center max-w-xl mx-auto space-y-8 relative overflow-hidden rounded-card">
+          {/* Decorative backdrop glow */}
+          <div className="absolute top-[-10%] right-[-10%] w-40 h-40 rounded-full bg-indigo/10 dark:bg-indigo/20 blur-[60px] pointer-events-none glowing-blob" />
+
+          {/* Pulse ring icon */}
+          <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-indigo-tint/50 dark:bg-indigo-tint/10 border border-indigo/10 animate-ping opacity-75" />
+            <div className="relative w-16 h-16 bg-gradient-to-tr from-indigo to-indigo/80 text-white rounded-full flex items-center justify-center shadow-premium">
+              <Upload size={24} />
+            </div>
           </div>
+
           <div>
-            <h1 className="text-3xl font-display font-semibold text-ink">Let's build your profile</h1>
-            <p className="text-text-muted mt-2">
-              Upload your resume in PDF or LaTeX format. We'll extract your skills, experience, and projects automatically.
+            <h1 className="text-3xl md:text-4xl font-bold font-display text-ink leading-tight">
+              Let's build your <span className="text-indigo bg-gradient-to-r from-indigo to-coral bg-clip-text text-transparent">profile</span>
+            </h1>
+            <p className="text-text-muted mt-2 max-w-md mx-auto text-sm">
+              Upload your resume in PDF, TXT, or LaTeX format. Our AI parser will extract your skills, education, and projects automatically.
             </p>
           </div>
 
-          <label className="border-2 border-dashed border-border hover:border-indigo/50 hover:bg-canvas rounded-card p-10 flex flex-col items-center justify-center cursor-pointer transition-all h-48">
-            <Upload size={24} className="text-text-muted" />
-            <span className="mt-2 text-sm font-medium text-ink">Click to upload or drag resume here</span>
-            <span className="text-xs text-text-muted mt-1">PDF, TXT, or TEX up to 5MB</span>
+          <label className="border-2 border-dashed border-border/80 hover:border-indigo/40 bg-canvas/30 hover:bg-indigo-tint/5 rounded-card p-10 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 h-52 group relative">
+            <div className="w-12 h-12 rounded-full bg-canvas border border-border group-hover:border-indigo/20 flex items-center justify-center text-text-muted group-hover:text-indigo group-hover:scale-110 transition-all duration-300">
+              <Upload size={20} />
+            </div>
+            <span className="mt-4 text-sm font-semibold text-ink group-hover:text-indigo transition-colors">
+              Click to upload or drag resume here
+            </span>
+            <span className="text-xs text-text-muted mt-1">Files supported up to 5MB</span>
+            
+            {/* Format pills */}
+            <div className="flex gap-2 mt-4">
+              <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded bg-surface border border-border text-text-muted group-hover:border-indigo/15 group-hover:text-indigo transition-all">.pdf</span>
+              <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded bg-surface border border-border text-text-muted group-hover:border-indigo/15 group-hover:text-indigo transition-all">.txt</span>
+              <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded bg-surface border border-border text-text-muted group-hover:border-indigo/15 group-hover:text-indigo transition-all">.tex</span>
+            </div>
+            
             <input
               type="file"
               accept=".pdf,.tex,.txt"
@@ -208,12 +230,12 @@ export const OnboardingPage = () => {
             />
           </label>
 
-          <div className="flex flex-col gap-3 pt-4">
+          <div className="flex flex-col gap-3 pt-2">
             <button
               onClick={() => setStep("form")}
-              className="text-indigo text-sm font-medium hover:underline"
+              className="px-6 py-2.5 bg-surface hover:bg-canvas border border-border text-ink hover:text-indigo text-xs font-semibold rounded-button transition-all duration-300 shadow-sm self-center inline-flex items-center gap-1.5"
             >
-              Skip — I'll fill it manually
+              Skip — I'll fill details manually
             </button>
           </div>
         </div>
