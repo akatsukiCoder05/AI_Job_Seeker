@@ -2,6 +2,10 @@
 
 > AI-powered job recommendation and one-click application platform for fresh graduates.
 
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Visit%20App-6366f1?style=for-the-badge&logo=vercel&logoColor=white)](https://ai-job-seeker-eight.vercel.app/)
+
+**🌐 [https://ai-job-seeker-eight.vercel.app/](https://ai-job-seeker-eight.vercel.app/)**
+
 ---
 
 ## What It Does
@@ -75,8 +79,8 @@ AI-Job-Seeker/
 ### 1. Clone
 
 ```bash
-git clone https://github.com/your-org/AI-Job-Seeker.git
-cd AI-Job-Seeker
+git clone https://github.com/0705rishi/ai_job_seeker.git
+cd ai_job_seeker
 ```
 
 ### 2. Configure environment variables
