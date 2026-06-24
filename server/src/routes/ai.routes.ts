@@ -49,4 +49,32 @@ aiRouter.post(
   aiController.chatWithAi as any
 );
 
+aiRouter.post(
+  "/interview/questions",
+  protect as any,
+  authorize("seeker") as any,
+  aiController.getInterviewQuestions as any
+);
+
+aiRouter.post(
+  "/interview/submit",
+  protect as any,
+  authorize("seeker") as any,
+  aiController.submitInterviewAnswers as any
+);
+
+aiRouter.get(
+  "/interview/history",
+  protect as any,
+  authorize("seeker") as any,
+  aiController.getInterviewHistory as any
+);
+
+aiRouter.post(
+  "/latex-resume/tailored",
+  protect as any,
+  authorize("seeker") as any,
+  aiController.generateTailoredLatexResume as any
+);
+
 export default aiRouter;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../lib/axios";
 import { X, Sparkles, User, Loader2, ArrowRight } from "lucide-react";
+import useAuthStore from "../store/auth.store";
 
 // Custom inline SVGs to bypass missing lucide-react typings
 const MessageSquare = ({ size = 24, className }: { size?: number; className?: string }) => (
@@ -44,15 +45,18 @@ interface Message {
 }
 
 export const AiChatbot = () => {
+  const { user } = useAuthStore();
+  const userId = user?._id || "guest";
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load chat history from sessionStorage on mount
+  // Load chat history from sessionStorage when user changes
   useEffect(() => {
-    const savedChat = sessionStorage.getItem("ai_career_chat");
+    const savedChat = sessionStorage.getItem(`ai_career_chat_${userId}`);
     if (savedChat) {
       try {
         setMessages(JSON.parse(savedChat));
@@ -68,14 +72,7 @@ export const AiChatbot = () => {
         }
       ]);
     }
-  }, []);
-
-  // Save chat history to sessionStorage whenever it changes
-  useEffect(() => {
-    if (messages.length > 0) {
-      sessionStorage.setItem("ai_career_chat", JSON.stringify(messages));
-    }
-  }, [messages]);
+  }, [userId]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -86,7 +83,9 @@ export const AiChatbot = () => {
     if (!textToSend.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: textToSend };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessagesWithUser = [...messages, userMsg];
+    setMessages(updatedMessagesWithUser);
+    sessionStorage.setItem(`ai_career_chat_${userId}`, JSON.stringify(updatedMessagesWithUser));
     setInputText("");
     setIsLoading(true);
 
@@ -98,11 +97,15 @@ export const AiChatbot = () => {
       });
 
       const reply = response.data?.data?.reply || "I couldn't process that. Could you try asking again?";
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      const updatedMessagesWithAssistant: Message[] = [...updatedMessagesWithUser, { role: "assistant", content: reply }];
+      setMessages(updatedMessagesWithAssistant);
+      sessionStorage.setItem(`ai_career_chat_${userId}`, JSON.stringify(updatedMessagesWithAssistant));
     } catch (err: any) {
       console.error("Chatbot API error:", err);
       const fallbackText = "I'm having trouble connecting to my servers right now. Please make sure the backend server is running and try again!";
-      setMessages((prev) => [...prev, { role: "assistant", content: fallbackText }]);
+      const updatedMessagesWithError: Message[] = [...updatedMessagesWithUser, { role: "assistant", content: fallbackText }];
+      setMessages(updatedMessagesWithError);
+      sessionStorage.setItem(`ai_career_chat_${userId}`, JSON.stringify(updatedMessagesWithError));
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +121,7 @@ export const AiChatbot = () => {
       content: "Hello! I am your AI Career Coach. 🎓 How can I help you optimize your resume, prepare for interviews, or check your skill gaps today?"
     };
     setMessages([defaultMsg]);
-    sessionStorage.removeItem("ai_career_chat");
+    sessionStorage.removeItem(`ai_career_chat_${userId}`);
   };
 
   // Simple formatter to convert markdown bold (**text**) and bullet points to elements

@@ -86,11 +86,87 @@ export const useAi = () => {
     });
   };
 
+  // Mutation to generate interview questions
+  const useGenerateQuestions = () => {
+    return useMutation<{ success: boolean; data: { questions: string[]; jobTitle: string; company: string } }, Error, { jobId?: string }>({
+      mutationFn: async ({ jobId }) => {
+        const response = await api.post("/ai/interview/questions", { jobId });
+        return response.data;
+      },
+    });
+  };
+
+  // Mutation to submit interview answers
+  const useSubmitInterviewAnswers = () => {
+    return useMutation<{
+      success: boolean;
+      data: {
+        evaluation: {
+          _id: string;
+          jobTitle: string;
+          company: string;
+          score: number;
+          recommendation: "apply" | "do_not_apply";
+          feedback: string;
+          strengths: string[];
+          weaknesses: string[];
+          answers: Array<{ question: string; answer: string; feedback: string }>;
+          createdAt: string;
+        };
+        emailPreviewUrl?: string;
+      };
+    }, Error, { jobId?: string; questions: string[]; answers: string[] }>({
+      mutationFn: async ({ jobId, questions, answers }) => {
+        const response = await api.post("/ai/interview/submit", { jobId, questions, answers });
+        return response.data;
+      },
+    });
+  };
+
+  // Query interview history
+  const useGetInterviewHistory = () => {
+    return useQuery<{
+      success: boolean;
+      data: Array<{
+        _id: string;
+        jobTitle: string;
+        company: string;
+        score: number;
+        recommendation: "apply" | "do_not_apply";
+        feedback: string;
+        strengths: string[];
+        weaknesses: string[];
+        createdAt: string;
+      }>;
+    }, Error>({
+      queryKey: ["interviewHistory"],
+      queryFn: async () => {
+        const response = await api.get("/ai/interview/history");
+        return response.data;
+      },
+      retry: false,
+    });
+  };
+
+  // Mutation to generate tailored LaTeX resume
+  const useGenerateTailoredLatexResume = () => {
+    return useMutation<LatexResumeResponse, Error, { jobId: string }>({
+      mutationFn: async ({ jobId }) => {
+        const response = await api.post("/ai/latex-resume/tailored", { jobId });
+        return response.data;
+      },
+    });
+  };
+
   return {
     useGetAtsScore,
     useGetSkillGap,
     useGenerateCoverLetter,
     useGenerateLatexResume,
+    useGenerateQuestions,
+    useSubmitInterviewAnswers,
+    useGetInterviewHistory,
+    useGenerateTailoredLatexResume,
   };
 };
 

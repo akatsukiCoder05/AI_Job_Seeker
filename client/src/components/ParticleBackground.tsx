@@ -25,6 +25,7 @@ export const ParticleBackground: React.FC = () => {
         precision highp float;
         uniform float u_time;
         uniform vec2 u_resolution;
+        uniform float u_darkTheme;
         varying vec2 v_texCoord;
 
         float hash(vec2 p) {
@@ -38,7 +39,8 @@ export const ParticleBackground: React.FC = () => {
             vec2 st = uv * 2.0 - 1.0;
             st.x *= u_resolution.x / u_resolution.y;
 
-            vec3 color = vec3(0.04, 0.07, 0.15); // Matches base dark theme
+            vec3 baseColor = mix(vec3(0.97, 0.97, 0.98), vec3(0.04, 0.07, 0.15), u_darkTheme);
+            vec3 color = baseColor;
             
             // Create a 3D-like particle grid
             float scale = 15.0;
@@ -59,11 +61,17 @@ export const ParticleBackground: React.FC = () => {
             float m = smoothstep(size, size - 0.05, dist + wave * 0.1);
             
             // Color glow
-            vec3 pColor = mix(vec3(0.3, 0.2, 0.9), vec3(0.1, 0.6, 0.8), h);
-            color += m * pColor * (0.5 + 0.5 * pulse);
+            vec3 pColor = mix(
+              mix(vec3(0.4, 0.35, 0.9), vec3(0.2, 0.7, 0.9), h), // light mode particles (higher visibility contrast)
+              mix(vec3(0.3, 0.2, 0.9), vec3(0.1, 0.6, 0.8), h),  // dark mode particles
+              u_darkTheme
+            );
+            
+            float glowFactor = mix(0.2, 1.0, u_darkTheme);
+            color += m * pColor * (0.5 + 0.5 * pulse) * glowFactor;
             
             // Background depth glow
-            float depthGlow = (1.0 - length(st * 0.5)) * 0.15;
+            float depthGlow = (1.0 - length(st * 0.5)) * 0.15 * glowFactor;
             color += depthGlow * vec3(0.3, 0.2, 0.9);
 
             gl_FragColor = vec4(color, 1.0);
@@ -110,6 +118,7 @@ export const ParticleBackground: React.FC = () => {
     const positionLocation = gl.getAttribLocation(program, "position");
     const timeLocation = gl.getUniformLocation(program, "u_time");
     const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+    const darkThemeLocation = gl.getUniformLocation(program, "u_darkTheme");
 
     function resize() {
       if (!canvasEl || !gl) return;
@@ -132,6 +141,8 @@ export const ParticleBackground: React.FC = () => {
       gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
       gl.uniform1f(timeLocation, time);
       gl.uniform2f(resolutionLocation, canvasEl.width, canvasEl.height);
+      const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+      gl.uniform1f(darkThemeLocation, isDark ? 1.0 : 0.0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       reqId = requestAnimationFrame(render);
     }

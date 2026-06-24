@@ -115,3 +115,14 @@ button:active:not(:disabled), a:active {
 .bg-white {
   background-color: var(--color-surface) !important;
 }
+
+/* Form Select and Option styling for dark/light mode readability */
+select {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+select option {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}

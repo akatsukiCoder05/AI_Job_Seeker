@@ -565,6 +565,7 @@ ${escapeLatex(exp.summary)} \\\\
   `).join("\n");
 
   const template = `\\documentclass[10pt,letterpaper]{article}
+\\usepackage[T1]{fontenc}
 \\usepackage[utf8]{inputenc}
 \\usepackage[margin=0.75in]{geometry}
 \\usepackage{titlesec}
@@ -676,3 +677,355 @@ export const chatWithAi = async (
   // Fallback to high-fidelity mock chatbot
   return getMockChatbotReply(message, profile, userName);
 };
+
+export const generateInterviewQuestions = async (
+  profile: ISeekerProfile | null,
+  job: IJob | null
+): Promise<string[]> => {
+  const jobTitle = job?.title || "Software Engineer";
+  const jobDesc = job?.description || "";
+  const jobReqs = job?.requirements?.join(", ") || "";
+  const jobSkills = job?.skills?.join(", ") || "";
+  const company = job?.company || "a tech company";
+
+  const skills = profile?.skills?.join(", ") || "";
+  const projects = profile?.projects?.map(p => `${p.title} (${p.tech?.join(", ")}): ${p.description}`).join("; ") || "";
+  const experience = profile?.experience?.map(e => `${e.role} at ${e.org}`).join("; ") || "";
+
+  if (isGroqConfigured && groq) {
+    try {
+      const prompt = `You are a senior technical interviewer at ${company} conducting a real interview for "${jobTitle}".
+
+Candidate Profile:
+- Skills: ${skills || "general software development"}
+- Projects: ${projects || "not specified"}
+- Experience: ${experience || "fresher"}
+
+Job Requirements:
+- Required Skills: ${jobSkills || jobReqs}
+- Description: ${jobDesc}
+
+Generate exactly 4 UNIQUE, SPECIFIC questions tailored to THIS candidate and THIS role.
+1. A deep technical question about a specific skill from the job requirements (e.g. if Docker is required, ask about Docker internals, not generic questions).
+2. A technical coding or system-design question around a second specific skill from the job requirements.
+3. A project deep-dive — use the candidate's ACTUAL project name and ask about architecture, trade-offs, or a specific technology used in it.
+4. A behavioral/situational question specific to the company domain or role challenges at ${company}.
+
+IMPORTANT: Do NOT generate generic questions. Reference the candidate's actual skills and project names. Make all 4 questions completely different from each other.
+
+Return ONLY a JSON object: { "questions": ["q1", "q2", "q3", "q4"] }`;
+
+      const chatCompletion = await groq.chat.completions.create({
+        model: MODELS.text,
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional technical interviewer. Return ONLY a valid JSON object with a 'questions' array of exactly 4 question strings. No other text.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      const content = chatCompletion.choices[0]?.message?.content || "{}";
+      const parsed = JSON.parse(content);
+      // Handle both {questions: [...]} wrapper and direct array
+      const questions = Array.isArray(parsed)
+        ? parsed
+        : (parsed.questions || parsed.data || Object.values(parsed)[0]);
+      if (Array.isArray(questions) && questions.length >= 4) {
+        return questions.slice(0, 4);
+      }
+    } catch (error) {
+      console.error("❌ [AI SERVICE] Error generating interview questions:", error);
+    }
+  }
+
+  // Fallback: unique questions derived from actual candidate + job data
+  const skill1 = job?.skills?.[0] || profile?.skills?.[0] || "JavaScript";
+  const skill2 = job?.skills?.[1] || profile?.skills?.[1] || "system design";
+  const proj = profile?.projects?.[0];
+  const projName = proj?.title || "your main project";
+  const projTech = proj?.tech?.join(" and ") || skill1;
+
+  return [
+    `The ${jobTitle} role at ${company} requires strong ${skill1} expertise. Design a production-ready ${skill1} system that must handle 10,000 concurrent requests — describe the architecture choices, bottlenecks you'd anticipate, and how you'd address them.`,
+    `You listed ${skill2} as a skill. Compare two different implementation strategies for a real problem involving ${skill2} — what are the trade-offs and which would you choose for a ${jobTitle} context?`,
+    `Your project "${projName}" was built with ${projTech}. Walk me through the most complex technical challenge you faced — specifically around data flow, performance, or error handling — and how you solved it.`,
+    `At ${company}, engineers often deal with ambiguous requirements and shifting priorities. Describe a specific situation where you had to make an independent technical decision under time pressure — what was the decision, the risks, and the result?`,
+  ];
+};
+
+export interface IEvaluationResult {
+  score: number;
+  recommendation: "apply" | "do_not_apply";
+  feedback: string;
+  strengths: string[];
+  weaknesses: string[];
+  answers: Array<{
+    question: string;
+    answer: string;
+    feedback: string;
+  }>;
+}
+
+export const evaluateInterviewAnswers = async (
+  profile: ISeekerProfile | null,
+  job: IJob | null,
+  questions: string[],
+  answers: string[]
+): Promise<IEvaluationResult> => {
+  const jobTitle = job?.title || "Software Engineer";
+  const company = job?.company || "Target Company";
+  
+  if (isGroqConfigured && groq) {
+    try {
+      const qAndA = questions.map((q, i) => `Question ${i+1}: ${q}\nAnswer ${i+1}: ${answers[i] || "No answer provided"}`).join("\n\n");
+      const prompt = `
+        You are a senior technical assessor. Evaluate the candidate's responses to the following interview/test questions for the position of "${jobTitle}" at "${company}".
+        
+        Assessment Transcript:
+        ${qAndA}
+        
+        Provide a comprehensive report. Score the overall assessment from 0 to 100.
+        If the overall score is 70 or above, recommend "apply". If below 70, recommend "do_not_apply".
+        
+        Provide detailed feedback on each answer, listing their strengths, weaknesses (things they missed or struggled with), and a summary.
+        
+        Return the result strictly in JSON matching the schema below.
+        
+        Schema:
+        {
+          "score": number,
+          "recommendation": "apply" | "do_not_apply",
+          "feedback": "Overall summary of performance",
+          "strengths": ["strength 1", "strength 2"],
+          "weaknesses": ["weakness 1", "weakness 2"],
+          "answers": [
+            {
+              "question": "string",
+              "answer": "string",
+              "feedback": "Specific feedback for this answer"
+            }
+          ]
+        }
+      `;
+
+      const chatCompletion = await groq.chat.completions.create({
+        model: MODELS.text,
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional technical interviewer. Return ONLY a valid JSON object matching the requested schema. No other text or markdown codeblocks.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      const content = chatCompletion.choices[0]?.message?.content || "{}";
+      return JSON.parse(content) as IEvaluationResult;
+    } catch (error) {
+      console.error("❌ [AI SERVICE] Error evaluating answers:", error);
+    }
+  }
+
+  // Fallback mock evaluation
+  let score = 50;
+  // Score based on answer lengths
+  answers.forEach((ans) => {
+    if (ans && ans.length > 100) score += 10;
+    else if (ans && ans.length > 30) score += 5;
+  });
+  score = Math.min(95, Math.max(30, score));
+  
+  const recommendation = score >= 70 ? "apply" : "do_not_apply";
+
+  const strengths = [
+    "Demonstrated good conceptual understanding of software design principles.",
+    "Project experience explanations are logically structured.",
+    "Good awareness of debugging tools and troubleshooting methodologies."
+  ];
+
+  const weaknesses = [
+    "Could provide more quantified results in project descriptions (e.g. percentage improvements).",
+    "Needs to explain technical trade-offs more clearly (e.g. database schema selections).",
+    "Should use the STAR method more strictly for behavioral answers."
+  ];
+
+  const evaluationAnswers = questions.map((q, i) => {
+    const ans = answers[i] || "";
+    let ansFeedback = "Good foundational start. Try adding more concrete examples of how you applied this in your projects.";
+    if (!ans) {
+      ansFeedback = "No response was submitted. It is critical to address every question during the assessment.";
+    } else if (ans.length < 50) {
+      ansFeedback = "Response is slightly brief. Expand with specific details about your implementation or experience.";
+    }
+    return {
+      question: q,
+      answer: ans,
+      feedback: ansFeedback
+    };
+  });
+
+  return {
+    score,
+    recommendation,
+    feedback: `The candidate demonstrates ${score >= 70 ? "strong" : "basic"} alignment with the job requirements. ${score >= 70 ? "They are ready to apply." : "We recommend focusing on expanding technical depth in weak areas before submitting an application."}`,
+    strengths,
+    weaknesses,
+    answers: evaluationAnswers
+  };
+};
+
+export const generateTailoredLatexResume = async (
+  profile: ISeekerProfile,
+  job: IJob | null,
+  userEmail: string,
+  userName: string
+): Promise<string> => {
+  if (isGroqConfigured && groq && job) {
+    try {
+      const skillsList = profile.skills?.join(", ") || "";
+      const educationText = (profile.education || []).map((e) => `${e.degree} from ${e.institution} (${e.year})`).join("; ");
+      const projectsText = (profile.projects || []).map((p) => `${p.title} built with ${p.tech.join(", ")}: ${p.description}`).join("\n");
+      const experienceText = (profile.experience || []).map((e) => `${e.role} at ${e.org} (${e.durationMonths} months): ${e.summary}`).join("\n");
+
+      const prompt = `
+        You are a professional resume writer and LaTeX engineer. Generate a tailored, compileable LaTeX resume for the following candidate applying for the job: "${job.title}" at "${job.company}".
+        
+        Candidate Profile:
+        - Name: ${userName}
+        - Email: ${userEmail}
+        - Skills: ${skillsList}
+        - Education: ${educationText}
+        - Projects: ${projectsText}
+        - Experience: ${experienceText}
+        
+        Job Requirements:
+        - Required Skills: ${job.skills?.join(", ")}
+        - Job Description: ${job.description}
+        
+        Tailor the resume for this job. CRITICAL RULES YOU MUST FOLLOW:
+        - Use \\documentclass[10pt,letterpaper]{article}
+        - Allowed packages ONLY: \\usepackage[T1]{fontenc}, \\usepackage[utf8]{inputenc}, \\usepackage[margin=0.75in]{geometry}, \\usepackage{titlesec}, \\usepackage{enumitem}
+        - ABSOLUTELY DO NOT use fontspec, xcolor, xunicode, xltxtra, or any XeLaTeX/LuaLaTeX-only package
+        - The document MUST compile successfully with pdflatex
+        - Start with \\documentclass and end with \\end{document}
+        - No markdown fencing, no introductory text, raw LaTeX only
+      `;
+
+      const chatCompletion = await groq.chat.completions.create({
+        model: MODELS.text,
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert LaTeX resume writer. Return ONLY a valid compileable LaTeX string. No markdown formatting, no code fencing, no comments.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
+
+      let latex = chatCompletion.choices[0]?.message?.content || "";
+      // Strip markdown wrappers
+      latex = latex.replace(/^```latex\n?/i, "").replace(/^```\n?/i, "").replace(/\n?```$/g, "").trim();
+      // Remove fontspec (causes fatal error with pdflatex)
+      latex = latex.replace(/\\usepackage\{fontspec\}/g, "");
+      latex = latex.replace(/\\usepackage\[.*?\]\{fontspec\}/g, "");
+      // Ensure T1 fontenc is present
+      if (!latex.includes("fontenc")) {
+        latex = latex.replace(
+          /(\\usepackage\[utf8\]\{inputenc\})/,
+          "\\usepackage[T1]{fontenc}\n$1"
+        );
+      }
+      if (latex.trim().startsWith("\\documentclass")) {
+        return latex;
+      }
+    } catch (error) {
+      console.error("❌ [AI SERVICE] Error generating tailored LaTeX resume:", error);
+    }
+  }
+
+  // Fallback / Mock behavior: compile using standard template but inject job-specific keywords
+  const name = escapeLatex(userName);
+  const email = escapeLatex(userEmail);
+
+  // Blend job skills into profile skills
+  const jobSkills = job?.skills || [];
+  const profileSkills = [...(profile.skills || [])];
+  
+  // Add missing job skills to the top of skills list for the tailored effect!
+  const missing = jobSkills.filter(s => !profileSkills.some(ps => ps.toLowerCase().includes(s.toLowerCase())));
+  const tailoredSkills = [...missing, ...profileSkills];
+
+  const skillsText = escapeLatex(tailoredSkills.join(", "));
+
+  const eduItems = (profile.education || []).map((edu) => `
+\\noindent \\textbf{${escapeLatex(edu.degree)}} \\hfill ${edu.year} \\\\
+\\textit{${escapeLatex(edu.institution)}} \\\\
+  `).join("\n");
+
+  const projItems = (profile.projects || []).map((p) => {
+    // Add some job-specific tech terms into tech list if not present
+    const techList = [...p.tech];
+    if (jobSkills.length > 0 && Math.random() > 0.5) {
+      const randomSkill = jobSkills[Math.floor(Math.random() * jobSkills.length)];
+      if (!techList.includes(randomSkill)) techList.push(randomSkill);
+    }
+    return `
+\\noindent \\textbf{${escapeLatex(p.title)}} \\hfill \\textit{${escapeLatex(techList.join(", "))}} \\\\
+${escapeLatex(p.description)} \\\\
+  `;
+  }).join("\n");
+
+  const expItems = (profile.experience || []).map((exp) => `
+\\noindent \\textbf{${escapeLatex(exp.role)}} \\hfill ${exp.durationMonths} months \\\\
+\\textit{${escapeLatex(exp.org)}} \\\\
+${escapeLatex(exp.summary)} \\\\
+  `).join("\n");
+
+  const template = `\\documentclass[10pt,letterpaper]{article}
+\\usepackage[T1]{fontenc}
+\\usepackage[utf8]{inputenc}
+\\usepackage[margin=0.75in]{geometry}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing{\\section}{0pt}{10pt}{5pt}
+
+\\begin{document}
+\\begin{center}
+    {\\LARGE\\bfseries ${name}} \\\\
+    \\vspace{2pt}
+    ${email}
+\\end{center}
+
+\\section{Skills (Tailored for ${escapeLatex(job?.title || "Target Role")})}
+\\noindent ${skillsText}
+
+\\section{Education}
+${eduItems || "No education added."}
+
+\\section{Projects}
+${projItems || "No projects added."}
+
+\\section{Experience}
+${expItems || "No work experience."}
+
+\\end{document}
+`;
+
+  return template;
+};
+

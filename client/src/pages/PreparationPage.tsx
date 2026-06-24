@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import ParticleBackground from "../components/ParticleBackground";
 import Mascot from "../components/Mascot";
+import useAi from "../features/useAi";
+import useRecommendations from "../features/useRecommendations";
 
 // Icons
 const BookOpen = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
@@ -40,7 +43,7 @@ const LightbulbIcon = ({ size = 16, className = "" }: { size?: number; className
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
 );
 
-type TabId = "basics" | "technical" | "interview";
+type TabId = "basics" | "technical" | "interview" | "mock-test";
 
 interface AccordionItem { question: string; answer: string; tip?: string; }
 interface SkillCardData { icon: string; title: string; level: string; topics: string[]; color: string; accent: string; }
@@ -203,6 +206,11 @@ export const PreparationPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>("basics");
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
+  const { useGetInterviewHistory } = useAi();
+  const { useGetRecommendations } = useRecommendations();
+  const { data: historyData, isLoading: isLoadingHistory } = useGetInterviewHistory();
+  const { data: recommendationsData } = useGetRecommendations();
+
   const toggleCheck = (key: string) => {
     setCheckedItems((prev) => {
       const next = new Set(prev);
@@ -223,6 +231,8 @@ export const PreparationPage: React.FC = () => {
   ];
 
   const readinessScore = Math.round((checkedItems.size / checklist.length) * 100);
+
+  const interviewHistory = historyData?.data || [];
 
   return (
     <div className="relative min-h-screen text-ink overflow-hidden pb-20">
@@ -256,10 +266,11 @@ export const PreparationPage: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <TabBtn active={activeTab === "basics"} onClick={() => setActiveTab("basics")} icon={<BookOpen size={18} />} label="Job Basics" sublabel="Resume, ATS, networking & salary" />
           <TabBtn active={activeTab === "technical"} onClick={() => setActiveTab("technical")} icon={<CodeIcon size={18} />} label="Technical Skills" sublabel="DSA, system design, cloud & more" />
           <TabBtn active={activeTab === "interview"} onClick={() => setActiveTab("interview")} icon={<MessageIcon size={18} />} label="Interview Prep" sublabel="Behavioral, technical & HR questions" />
+          <TabBtn active={activeTab === "mock-test"} onClick={() => setActiveTab("mock-test")} icon={<TrophyIcon size={18} />} label="AI Mock Test" sublabel="Live assessment & email report" />
         </div>
 
         {/* ── BASICS ── */}
@@ -385,6 +396,128 @@ export const PreparationPage: React.FC = () => {
                   </ul>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── MOCK TEST ── */}
+        {activeTab === "mock-test" && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo/10 text-indigo flex items-center justify-center"><TrophyIcon size={18} /></div>
+              <div><h2 className="font-bold text-lg text-ink">AI Technical Test & Mock Interview</h2><p className="text-xs text-text-muted">Get AI-evaluated on job-specific questions and receive a detailed email report</p></div>
+            </div>
+
+            {/* Launch Card */}
+            <div className="bg-gradient-to-br from-indigo/10 to-violet-500/5 border border-indigo/20 rounded-2xl p-6 space-y-5">
+              <div className="space-y-2">
+                <h3 className="font-bold text-ink">Start a New Assessment</h3>
+                <p className="text-xs text-text-muted leading-relaxed max-w-xl">
+                  Our AI will generate 4 tailored questions based on a target job's requirements and your profile. After you answer, it evaluates your responses, scores you out of 100, tells you whether to apply, and emails a full breakdown report — including your weak areas and a job-tailored Overleaf resume.
+                </p>
+              </div>
+
+              {/* Target Job Picker */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-ink">Select a Target Job (Optional — defaults to general tech assessment):</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Link
+                    to="/preparation/interview"
+                    className="flex items-center justify-center gap-2 px-5 py-3 bg-indigo text-white font-semibold text-sm rounded-xl hover:bg-opacity-90 active:scale-95 transition-all shadow-premium"
+                  >
+                    <TrophyIcon size={16} /> Start General Assessment
+                  </Link>
+
+                  {recommendationsData?.data?.recommendations && recommendationsData.data.recommendations.length > 0 && (
+                    <div className="bg-surface border border-border rounded-xl p-3 space-y-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Or pick from your top matches:</p>
+                      <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
+                        {recommendationsData.data.recommendations.slice(0, 5).map((rec: any) => (
+                          <Link
+                            key={rec.job._id}
+                            to={`/preparation/interview?jobId=${rec.job._id}`}
+                            className="text-xs px-3 py-2 rounded-lg border border-border hover:border-indigo/40 hover:bg-canvas transition-all flex items-center justify-between gap-2 group"
+                          >
+                            <span className="truncate text-ink font-medium">{rec.job.title} @ {rec.job.company}</span>
+                            <span className="text-[10px] text-indigo font-bold whitespace-nowrap flex items-center gap-1 group-hover:gap-2 transition-all">
+                              Test <ArrowRightIcon size={10} />
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* What happens */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                {[
+                  { num: "1", title: "AI Questions", desc: "4 tailored interview questions generated from job JD + your profile" },
+                  { num: "2", title: "Evaluation Report", desc: "Score out of 100, Apply / Don't Apply verdict, strengths & weak areas" },
+                  { num: "3", title: "Email + Resume", desc: "Full report emailed + job-tailored Overleaf LaTeX resume generated" },
+                ].map((s) => (
+                  <div key={s.num} className="flex items-start gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10">
+                    <span className="w-6 h-6 rounded-lg bg-indigo/20 border border-indigo/30 text-indigo text-xs font-black flex items-center justify-center shrink-0">{s.num}</span>
+                    <div>
+                      <p className="text-xs font-bold text-ink">{s.title}</p>
+                      <p className="text-[10px] text-text-muted leading-relaxed mt-0.5">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* History */}
+            <div className="bg-surface border border-border rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-ink text-sm flex items-center gap-2"><StarIcon size={14} className="text-amber-400" /> Assessment History</h3>
+                {interviewHistory.length > 0 && <span className="text-xs text-text-muted">{interviewHistory.length} test{interviewHistory.length > 1 ? 's' : ''} completed</span>}
+              </div>
+
+              {isLoadingHistory && (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => <div key={i} className="h-14 bg-border animate-pulse rounded-xl" />)}
+                </div>
+              )}
+
+              {!isLoadingHistory && interviewHistory.length === 0 && (
+                <div className="text-center py-8 text-text-muted text-xs">
+                  <TrophyIcon size={28} className="mx-auto mb-2 opacity-30" />
+                  No assessments completed yet. Start your first test above!
+                </div>
+              )}
+
+              {!isLoadingHistory && interviewHistory.length > 0 && (
+                <div className="space-y-2">
+                  {interviewHistory.map((entry: any) => {
+                    const isApply = entry.recommendation === "apply";
+                    return (
+                      <div key={entry._id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-canvas transition-all">
+                        {/* Score badge */}
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                            entry.score >= 70 ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-amber-400/10 text-amber-400 border border-amber-400/20"
+                          }`}
+                        >
+                          {entry.score}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-ink truncate">{entry.jobTitle}</p>
+                          <p className="text-[10px] text-text-muted">{entry.company} · {new Date(entry.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                            isApply ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-amber-400/10 text-amber-400 border border-amber-400/20"
+                          }`}
+                        >
+                          {isApply ? "✓ Apply" : "⚠ Improve first"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

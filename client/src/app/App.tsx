@@ -16,6 +16,7 @@ import useAuth from "../features/useAuth";
 import useNotifications from "../features/useNotifications";
 import AiChatbot from "../components/AiChatbot";
 import PreparationPage from "../pages/PreparationPage";
+import MockInterviewPage from "../pages/MockInterviewPage";
 import Mascot from "../components/Mascot";
 
 // Custom inline SVGs to bypass missing lucide-react typings
@@ -473,6 +474,14 @@ export const AppContent = () => {
           element={
             <ProtectedRoute allowedRole="seeker">
               <PreparationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/preparation/interview"
+          element={
+            <ProtectedRoute allowedRole="seeker">
+              <MockInterviewPage />
             </ProtectedRoute>
           }
         />

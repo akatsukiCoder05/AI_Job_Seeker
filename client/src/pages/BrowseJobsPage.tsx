@@ -69,7 +69,7 @@ export const BrowseJobsPage = () => {
               placeholder="Job title, company or keywords"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-canvas/80 border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink placeholder:text-text-muted/65 transition-all duration-200 outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-canvas border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink placeholder:text-text-muted/65 transition-all duration-200 outline-none"
             />
           </div>
         </div>
@@ -83,7 +83,7 @@ export const BrowseJobsPage = () => {
               placeholder="e.g. Bengaluru"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-canvas/80 border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink placeholder:text-text-muted/65 transition-all duration-200 outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-canvas border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink placeholder:text-text-muted/65 transition-all duration-200 outline-none"
             />
           </div>
         </div>
@@ -93,7 +93,7 @@ export const BrowseJobsPage = () => {
           <select
             value={workMode}
             onChange={(e) => setWorkMode(e.target.value)}
-            className="w-full px-3 py-2.5 bg-canvas/80 border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink transition-all duration-200 outline-none cursor-pointer"
+            className="w-full px-3 py-2.5 bg-canvas border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink transition-all duration-200 outline-none cursor-pointer"
           >
             <option value="all">Any Mode</option>
             <option value="remote">Remote</option>
@@ -107,7 +107,7 @@ export const BrowseJobsPage = () => {
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full px-3 py-2.5 bg-canvas/80 border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink transition-all duration-200 outline-none cursor-pointer"
+            className="w-full px-3 py-2.5 bg-canvas border border-border focus:border-indigo/50 focus:ring-2 focus:ring-indigo/15 rounded-button text-sm text-ink transition-all duration-200 outline-none cursor-pointer"
           >
             <option value="all">Any Type</option>
             <option value="full-time">Full-time</option>
