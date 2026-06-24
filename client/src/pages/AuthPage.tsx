@@ -38,7 +38,11 @@ export const AuthPage = () => {
       await login({ email, password });
       navigate("/dashboard");
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.error?.message || "Invalid email or password");
+      if (!err.response) {
+        setErrorMessage("Network error: Unable to connect to the backend server. Please make sure the server is online.");
+      } else {
+        setErrorMessage(err.response?.data?.error?.message || "Invalid email or password");
+      }
     }
   };
 

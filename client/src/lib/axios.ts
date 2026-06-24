@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+let rawApiUrl = import.meta.env.VITE_API_URL || "https://ai-job-seeker-6.onrender.com/api";
+
+// Robust check: append /api suffix if missing from the configured environment URL
+if (rawApiUrl && !rawApiUrl.endsWith("/api") && !rawApiUrl.endsWith("/api/")) {
+  rawApiUrl = rawApiUrl.replace(/\/$/, "") + "/api";
+}
+
+const API_URL = rawApiUrl;
 
 export const api = axios.create({
   baseURL: API_URL,
