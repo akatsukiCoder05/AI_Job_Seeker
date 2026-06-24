@@ -15,6 +15,8 @@ import useAuthStore from "../store/auth.store";
 import useAuth from "../features/useAuth";
 import useNotifications from "../features/useNotifications";
 import AiChatbot from "../components/AiChatbot";
+import PreparationPage from "../pages/PreparationPage";
+import Mascot from "../components/Mascot";
 
 // Custom inline SVGs to bypass missing lucide-react typings
 const Sun = ({ size = 24, className }: { size?: number; className?: string }) => (
@@ -114,6 +116,11 @@ const LandingScreen = () => {
     <div className="relative w-full max-w-5xl mx-auto py-12 md:py-24 flex flex-col items-center text-center space-y-12">
       {/* Decorative Blob */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-indigo/10 blur-[90px] pointer-events-none z-0 glowing-blob" />
+
+      {/* Floating Robot Mascot (visible on landing page) */}
+      <div className="absolute top-1/4 right-0 lg:right-[-40px] w-48 h-48 pointer-events-none z-20 hidden md:block">
+        <Mascot size={192} />
+      </div>
 
       {/* Hero Badge */}
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-tint/70 dark:bg-indigo-tint/10 border border-indigo/15 text-indigo text-xs font-semibold uppercase tracking-wider relative z-10">
@@ -258,6 +265,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         { label: "Dashboard", path: "/dashboard", icon: Compass },
         { label: "Browse Jobs", path: "/jobs", icon: Briefcase },
         { label: "Resume Analyzer", path: "/resume", icon: FileText },
+        { label: "Preparation", path: "/preparation", icon: Sparkles },
         { label: "Applications", path: "/applications", icon: CheckSquare },
         { label: "Profile", path: "/profile", icon: User },
       ];
@@ -457,6 +465,14 @@ export const AppContent = () => {
           element={
             <ProtectedRoute allowedRole="seeker">
               <ResumeAnalyzerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/preparation"
+          element={
+            <ProtectedRoute allowedRole="seeker">
+              <PreparationPage />
             </ProtectedRoute>
           }
         />
