@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Globe, ArrowRight, Sparkles, Briefcase } from "lucide-react";
+import { MapPin, Globe, ArrowRight, Sparkles, Briefcase, Phone } from "lucide-react";
 import useAuthStore from "../store/auth.store";
 import useRecommendations, { Recommendation } from "../features/useRecommendations";
 import MatchRing from "../components/match-ring/MatchRing";
 import JobDetailsDrawer from "../components/jobs/JobDetailsDrawer";
 import useApplications from "../features/useApplications";
+import useAuth from "../features/useAuth";
 
 export const DashboardPage = () => {
   const { user } = useAuthStore();
   const [activeRecDetails, setActiveRecDetails] = useState<Recommendation | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneSuccess, setPhoneSuccess] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const { updatePhone, isUpdatingPhone } = useAuth();
 
   const { useGetRecommendations } = useRecommendations();
   const { data: recData, isLoading: isRecLoading, error: recError } = useGetRecommendations();
@@ -325,6 +330,82 @@ export const DashboardPage = () => {
           onClose={() => setActiveRecDetails(null)}
         />
       )}
+
+      {/* SMS Notification Phone Settings */}
+      <div className="p-6 bg-surface rounded-card border border-border/80 shadow-premium relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-indigo via-indigo/70 to-transparent" />
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <span className={`p-2.5 rounded-lg ${
+              user?.phone ? "bg-emerald-tint/50 text-emerald" : "bg-amber-tint/60 text-amber"
+            }`}>
+              <Phone size={18} />
+            </span>
+            <div>
+              <h3 className="font-semibold text-sm text-ink">SMS Job Notifications</h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                {user?.phone
+                  ? <><span className="font-medium text-emerald">Active:</span> SMS sent to <span className="font-mono font-medium">{user.phone}</span></>
+                  : <span className="text-amber font-medium">⚠ No phone number — you won't receive SMS alerts for auto-applied jobs.</span>
+                }
+              </p>
+            </div>
+          </div>
+
+          <form
+            className="flex gap-2 md:ml-auto"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setPhoneError("");
+              setPhoneSuccess("");
+              try {
+                await updatePhone({ phone: phoneInput });
+                setPhoneSuccess("Phone number updated! You'll now receive SMS notifications.");
+                setPhoneInput("");
+              } catch (err: any) {
+                setPhoneError(err?.response?.data?.error?.message || "Failed to update phone number.");
+              }
+            }}
+          >
+            <input
+              id="sms-phone-input"
+              type="tel"
+              required
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder={user?.phone ? "Update phone number" : "+91 99999 99999"}
+              className="px-3 py-2 bg-canvas border border-border rounded-button text-ink placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-indigo focus:border-transparent text-sm w-48"
+            />
+            <button
+              type="submit"
+              disabled={isUpdatingPhone}
+              className="px-4 py-2 bg-indigo text-white font-medium rounded-button hover:bg-opacity-90 active:scale-95 transition-all text-sm disabled:opacity-50 shrink-0"
+            >
+              {isUpdatingPhone ? "Saving…" : user?.phone ? "Update" : "Save"}
+            </button>
+          </form>
+        </div>
+
+        {phoneSuccess && (
+          <p className="mt-3 text-xs text-emerald font-medium">✅ {phoneSuccess}</p>
+        )}
+        {phoneError && (
+          <p className="mt-3 text-xs text-rose font-medium">⚠ {phoneError}</p>
+        )}
+
+        <p className="mt-3 text-[11px] text-text-muted">
+          📌 <strong>Twilio Trial note:</strong> If using a Twilio Trial account, you must verify the destination number at{" "}
+          <a
+            href="https://console.twilio.com/us1/develop/phone-numbers/manage/verified"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo underline"
+          >
+            twilio.com/console/phone-numbers/verified
+          </a>{" "}
+          before SMS can be delivered to it.
+        </p>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { z } from "zod";
 import * as authService from "../services/auth.service";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
+import User from "../models/user.model";
 
 // Validation schemas
 export const registerSchema = z.object({
@@ -82,6 +83,47 @@ export const me = async (
       success: true,
       data: {
         user: req.user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Validation schema for phone update
+export const updatePhoneSchema = z.object({
+  phone: z.string().min(7, "Phone number must be at least 7 digits").max(20, "Phone number is too long"),
+});
+
+// Update own phone number (authenticated)
+export const updatePhone = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { phone } = req.body;
+    const userId = req.user?._id;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { phone } },
+      { new: true }
+    ).select("-passwordHash");
+
+    if (!updatedUser) {
+      res.status(404).json({
+        success: false,
+        error: { message: "User not found" },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: "Phone number updated successfully. You will now receive SMS notifications on this number.",
+        user: updatedUser,
       },
     });
   } catch (error) {

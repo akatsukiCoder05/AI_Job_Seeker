@@ -48,20 +48,47 @@ const normalizePhoneNumber = (phone: string): string => {
   return `+${cleaned}`;
 };
 
+/**
+ * Truncate a message to fit within a single SMS segment (160 chars).
+ * Appends "…" if truncated to keep messages concise and deliverable.
+ */
+const truncateSmsMessage = (message: string, maxLength = 157): string => {
+  if (message.length <= maxLength) return message;
+  return message.slice(0, maxLength) + "…";
+};
+
 export const sendSmsNotification = async (toNumber: string, message: string): Promise<boolean> => {
   const normalizedTo = normalizePhoneNumber(toNumber);
+  const body = truncateSmsMessage(message);
 
   if (isTwilioConfigured && client) {
     try {
       await client.messages.create({
-        body: message,
+        body: body,
         from: fromNumber,
         to: normalizedTo,
       });
       console.log(`📱 [Twilio SMS] Successfully sent notification to ${normalizedTo}`);
       return true;
     } catch (error: any) {
-      console.error(`❌ [Twilio SMS] Failed to send SMS to ${normalizedTo}:`, error.message || error);
+      const twilioCode = error.code;
+      let hint = "";
+
+      // Twilio error 21608: Unverified destination on a Trial account
+      if (twilioCode === 21608) {
+        hint =
+          "\n  ⚠️  TWILIO TRIAL ACCOUNT RESTRICTION: SMS can only be sent to phone numbers " +
+          "that you have manually verified in the Twilio console.\n" +
+          `  → The number "${normalizedTo}" is NOT verified.\n` +
+          "  → Fix: Go to https://console.twilio.com/us1/develop/phone-numbers/manage/verified\n" +
+          "    and add + verify the recipient's phone number, OR upgrade to a paid Twilio account.";
+      }
+
+      console.error(
+        `❌ [Twilio SMS] Failed to send SMS to ${normalizedTo}. ` +
+        `Twilio Error Code: ${twilioCode || "N/A"}, Message: ${error.message}${hint}`
+      );
+      return false;
     }
   }
 
@@ -69,7 +96,7 @@ export const sendSmsNotification = async (toNumber: string, message: string): Pr
   console.log("\n==================================================");
   console.log(`📱 [SMS NOTIFICATION MOCK]`);
   console.log(`To: ${normalizedTo}`);
-  console.log(`Message: ${message}`);
+  console.log(`Message: ${body}`);
   console.log(`Status: Twilio credentials not configured. Mock sent successfully.`);
   console.log("==================================================\n");
   return true;

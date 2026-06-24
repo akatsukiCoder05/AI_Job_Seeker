@@ -140,23 +140,35 @@ const autoApplySeekersForJob = async (job: any): Promise<void> => {
           status: "applied",
         });
         
-        // Create Notification alert
+        // Create Notification alert (full message stored in DB)
         const matchedSkillsList = match.matchedSkills.slice(0, 3).join(", ");
         const remainingStr = match.matchedSkills.length > 3 ? ` and ${match.matchedSkills.length - 3} others` : "";
         const skillsSnippet = matchedSkillsList ? ` (matching your skills: ${matchedSkillsList}${remainingStr})` : "";
         
-        const message = `AI has tailored your LaTeX resume template to emphasize matching competencies${skillsSnippet} and automatically applied you to the '${job.title}' vacancy at '${job.company}' with a strong compatibility score of ${match.score}%!`;
+        const dbMessage = `AI auto-applied you to '${job.title}' at '${job.company}' with a ${match.score}% compatibility score${skillsSnippet}!`;
         
         await Notification.create({
           userId: profile.userId,
           type: "auto-apply",
-          message,
+          message: dbMessage,
         });
 
-        // Send phone SMS notification if phone number is registered
+        // Send SMS notification — use a short message to fit within 160-char SMS limit
         const seekerUser = await User.findById(profile.userId);
         if (seekerUser && seekerUser.phone) {
-          await sendSmsNotification(seekerUser.phone, message);
+          const smsMessage = `AI Job Seeker: Auto-applied to '${job.title}' at '${job.company}' (${match.score}% match). Check your dashboard for details.`;
+          const smsSent = await sendSmsNotification(seekerUser.phone, smsMessage);
+          if (!smsSent) {
+            console.warn(
+              `⚠️  [Auto-Apply] SMS failed for user ${seekerUser.email} (${seekerUser.phone}). ` +
+              `Check Twilio logs above. The dashboard notification was still created.`
+            );
+          }
+        } else {
+          console.log(
+            `ℹ️  [Auto-Apply] No phone number registered for user ${profile.userId}. SMS skipped. ` +
+            `Dashboard notification created.`
+          );
         }
       }
     }

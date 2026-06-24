@@ -34,4 +34,12 @@ authRouter.post(
 
 authRouter.get("/me", protect as any, authController.me as any);
 
+// Allows authenticated users to update their phone number for SMS notifications
+authRouter.patch(
+  "/phone",
+  protect as any,
+  validate(authController.updatePhoneSchema),
+  authController.updatePhone as any
+);
+
 export default authRouter;

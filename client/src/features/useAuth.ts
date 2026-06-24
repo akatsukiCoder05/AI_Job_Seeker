@@ -90,6 +90,19 @@ export const useAuth = () => {
     },
   });
 
+  // Update phone number mutation
+  const updatePhoneMutation = useMutation<any, Error, { phone: string }>({
+    mutationFn: async (data) => {
+      const response = await api.patch("/auth/phone", data);
+      return response.data;
+    },
+    onSuccess: (res) => {
+      // Update the cached user so the new phone number is reflected immediately
+      setUser(res.data.user);
+      queryClient.setQueryData(["me"], { success: true, data: { user: res.data.user } });
+    },
+  });
+
   return {
     isMeLoading,
     register: registerMutation.mutateAsync,
@@ -100,6 +113,9 @@ export const useAuth = () => {
     loginError: loginMutation.error,
     logout,
     refetchMe: refetch,
+    updatePhone: updatePhoneMutation.mutateAsync,
+    isUpdatingPhone: updatePhoneMutation.isPending,
+    updatePhoneError: updatePhoneMutation.error,
   };
 };
 
