@@ -24,9 +24,28 @@ app.use(helmet({
 }));
 
 // Enable CORS
+const allowedOrigins = [
+  env.CLIENT_URL,
+  "https://ai-job-seeker-eight.vercel.app",
+  "https://ai-job-seeker-eight-one.vercel.app",
+  "https://client-silk-eight.vercel.app",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.startsWith("http://localhost:")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
