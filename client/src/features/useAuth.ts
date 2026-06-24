@@ -103,6 +103,18 @@ export const useAuth = () => {
     },
   });
 
+  // Delete account mutation
+  const deleteAccountMutation = useMutation<any, Error, void>({
+    mutationFn: async () => {
+      const response = await api.delete("/auth/account");
+      return response.data;
+    },
+    onSuccess: () => {
+      logout();
+      queryClient.setQueryData(["me"], null);
+    },
+  });
+
   return {
     isMeLoading,
     register: registerMutation.mutateAsync,
@@ -116,7 +128,11 @@ export const useAuth = () => {
     updatePhone: updatePhoneMutation.mutateAsync,
     isUpdatingPhone: updatePhoneMutation.isPending,
     updatePhoneError: updatePhoneMutation.error,
+    deleteAccount: deleteAccountMutation.mutateAsync,
+    isDeletingAccount: deleteAccountMutation.isPending,
+    deleteAccountError: deleteAccountMutation.error,
   };
 };
+
 
 export default useAuth;

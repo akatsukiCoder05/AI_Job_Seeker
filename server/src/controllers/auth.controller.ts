@@ -130,3 +130,33 @@ export const updatePhone = async (
     next(error);
   }
 };
+
+// Delete own account (authenticated)
+export const deleteAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: { message: "Not authorized" },
+      });
+      return;
+    }
+
+    await authService.deleteUserAccount(userId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: "Your account and all associated data have been permanently deleted.",
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

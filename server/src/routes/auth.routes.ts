@@ -42,4 +42,12 @@ authRouter.patch(
   authController.updatePhone as any
 );
 
+// Allows authenticated users to delete their account
+authRouter.delete(
+  "/account",
+  protect as any,
+  authController.deleteAccount as any
+);
+
 export default authRouter;
+

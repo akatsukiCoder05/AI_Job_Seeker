@@ -2,14 +2,28 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, X, Upload, Sparkles, AlertCircle } from "lucide-react";
 import useProfile, { SeekerProfileData, Education, Project, Experience } from "../features/useProfile";
+import useAuth from "../features/useAuth";
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
   const { profile, updateProfile, parseResume, isUpdatingProfile } = useProfile();
+  const { deleteAccount, isDeletingAccount } = useAuth();
   
   const [step, setStep] = useState<"upload" | "parsing" | "form">("upload");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+      navigate("/");
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.error?.message || "Failed to delete account. Please try again.");
+      setShowDeleteModal(false);
+    }
+  };
+
 
   // Form states
   const [education, setEducation] = useState<Education[]>([]);
@@ -646,10 +660,61 @@ export const OnboardingPage = () => {
               </button>
             </div>
           </form>
+
+          {/* Danger Zone */}
+          <div className="mt-12 p-6 border border-rose/20 bg-rose-tint/5 rounded-card space-y-4">
+            <h3 className="text-lg font-bold text-rose font-display">Danger Zone</h3>
+            <p className="text-xs text-text-muted">
+              Permanently delete your account and all associated data, including your profile, recommendations, saved jobs, applied jobs, and notifications. This action is irreversible.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="px-6 py-2.5 bg-rose text-white text-xs font-semibold rounded-button hover:bg-rose-dark active:scale-95 transition-all"
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-card max-w-md w-full p-6 space-y-6 animate-scaleIn">
+            <div className="flex items-center gap-3 text-rose">
+              <AlertCircle size={24} />
+              <h3 className="text-lg font-bold font-display">Delete Account?</h3>
+            </div>
+            
+            <p className="text-sm text-text-muted leading-relaxed">
+              Are you absolutely sure you want to delete your account? This will permanently erase your profile details, resume, applications, saved jobs, and notification history. You cannot undo this action.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeletingAccount}
+                className="px-4 py-2 border border-border text-ink font-medium rounded-button text-xs hover:bg-canvas disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount}
+                className="px-6 py-2 bg-rose text-white font-medium rounded-button text-xs hover:bg-opacity-95 disabled:opacity-50"
+              >
+                {isDeletingAccount ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 };
+
 
 export default OnboardingPage;
